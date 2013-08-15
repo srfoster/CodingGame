@@ -12,14 +12,12 @@ Crafty.c("World", {
 
     drawWorld: function() {
 
-    Crafty.e('PlayerCharacter').at(5, 5);
 
     for (var x = this._worldOffsetX; x < this._worldOffsetX + this._worldWidth; x++) {
       for (var y = this._worldOffsetY; y < this._worldOffsetY + this._worldHeight; y++) {
            var at_edge = x == this._worldOffsetX || x == this._worldOffsetX + this._worldWidth - 1 || y == this._worldOffsetY || y == this._worldOffsetY + this._worldHeight - 1;
  
         if (at_edge) {
-          // Place a tree entity at the current tile
           Crafty.e('Block')
             .attr({
               x: x * Game.map_grid.tile.width,
@@ -28,7 +26,6 @@ Crafty.c("World", {
               h: Game.map_grid.tile.height
             })
         } else if (Math.random() < 0.06) {
-          // Place a bush entity at the current tile
           Crafty.e('Block')
             .attr({
               x: x * Game.map_grid.tile.width,

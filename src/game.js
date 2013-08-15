@@ -1,3 +1,7 @@
+function game(){
+  return the_game
+}
+
 Game = {
   // This defines our grid's size and the size of each of its tiles
   map_grid: {
@@ -43,17 +47,9 @@ Game = {
     Crafty.init(Game.width(), Game.height());
     Crafty.background('rgb(0, 0, 0)');
 
-    Crafty.c("Game", {
-      init: function(){
-        this.requires("World, Inventory")
-        .worldBounds(Game.map_grid.width, Game.map_grid.height, 0, 0)
-        .drawWorld()
-        .inventoryBounds(Game.inventory_grid.width, Game.inventory_grid.height, Game.map_grid.width, 0)
-        .drawInventory()
-      }
-    });
+    document.getElementById("input").style.width = Game.width() + "px"
 
-    game = Crafty.e("Game")
+    Crafty.e("Game")
   
   }
 }

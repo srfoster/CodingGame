@@ -1,3 +1,288 @@
+Crafty.c("Game", {
+  init: function(){
+    this.requires("World, Inventory")
+
+    the_game = this
+
+    this.worldBounds(Game.map_grid.width, Game.map_grid.height, 0, 0)
+    .drawWorld()
+    .inventoryBounds(Game.inventory_grid.width, Game.inventory_grid.height, Game.map_grid.width, 0)
+    .drawInventory()
+
+    this.Crafty = Crafty
+  },
+  players: [],
+  
+  createPlayer: function(){
+    return this.createAndLog(function(game){
+      game.Crafty.e('PlayerCharacter').at(5, 5)
+    })
+  },
+
+  createChest: function(name){
+    return this.createAndLog(function(game){
+      game.Crafty.e(name)
+    })
+  },
+
+  createAndLog: function(fun){
+     game()._recordedMoves.push({type: "create", create: fun})
+     return fun(this)
+  },
+
+  _recordedMoves: [],
+
+  replay: function(){
+    this.replayMoves(this._recordedMoves)
+  },
+
+  replayMoves: function(moves){
+    if(moves.length == 0)
+        return;
+
+    for(var i = 0; i < moves.length; i++)
+    {
+        (function(i, moves){
+            setTimeout(function(){
+                var move = moves[i]
+
+                if(move.type == "move")
+                {
+                    //Turn off gravity
+                    if(move.obj(Crafty).antigravity)
+                        move.obj(Crafty).antigravity()
+
+                    //Turn off user input
+                    if(move.obj(Crafty).disableControl)
+                        move.obj(Crafty).disableControl()
+
+                    //Turn off recording
+                    move.obj(Crafty).disableRecording()
+
+                    if(move.obj(Crafty).x != move.x)
+                        move.obj(Crafty).x = move.x
+
+                    if(move.obj(Crafty).y != move.y)
+                        move.obj(Crafty).y = move.y
+                } else if (move.type == "create"){
+                    move.create(game())
+                }
+            }, i*10);
+        })(i,moves)
+    }
+
+
+
+  }
+});
+
+
+Crafty.c('Chest', {
+  init: function(){
+    var me = this
+
+    this.requires('2D, Canvas, Color, Particles, Draggable, Recordable')
+    //.particles()
+    .attr({
+        x: 50,
+        y: 50,
+        w: 50,
+        h: 50
+     })
+     .color("rgba(0,0,0,0)")
+     .bind("Draw", function(obj){this._draw(obj)})
+     .particles({
+        maxParticles: 10,
+        offsets:{x: 15, y: 15},
+        gravity:{x: 0, y: 0},
+        angle: 0,
+        startColour: [0, 131, 255, 1],
+        startColourRandom: [48, 50, 45, 0],
+        endColour: [0, 35, 245, 0],
+        endColourRandom: [60, 60, 60, 0],
+      })
+      .bind("EnterFrame", function(){this.recordMove(me)})
+     
+     this.ready = true
+  },
+
+  _draw: function(obj){
+    var context = obj.ctx
+
+    context.beginPath();
+    context.arc(this.x + this.w/2, this.y + this.h/2, this.w/2 - 1, 0, 2 * Math.PI, false);
+    context.fillStyle = this._fill_color;
+    context.fill();
+    context.lineWidth = 1;
+    context.strokeStyle = 'rgba(255, 255, 255, 1)';
+    context.stroke();
+  },
+
+  fillColor: function(color){
+    this._fill_color = color
+    this.trigger("Change")
+    return this
+  },
+
+  activateWithCooldown: function(avatar){
+    if(this._ready)
+    {
+      this._ready = false
+      this._Particles.size = 5
+
+      this.activate(avatar)
+
+    }
+  },
+
+  reactivate: function(){
+    var me = this
+    setTimeout(function(){
+        me._ready = true
+        me._Particles.size = 18
+    }, this.cooldown * 1000);
+  },
+
+  cooldown: 2,
+
+  _ready: true
+})
+
+Crafty.c('ForkChest', {
+  init: function(){
+    this.requires("Chest")
+  },
+
+  activate: function(player){
+   
+    if(!game().selectedItems[0] || game().selectedItems[0].type != "boolean")
+      return;
+
+    var new_player = Crafty.e('PlayerCharacter').attr(
+      {
+        x: this.x, 
+        y: this.y
+      });
+
+    game().switchContext(new_player._inventory_context)
+    game().addItem(game().selectedItems[0].history.counter_argument)
+    game().switchContext(player._inventory_context)
+  }
+});
+
+
+Crafty.c('IsListEmptyChest', {
+  init: function(){
+    this.requires("Chest")
+
+    this._Particles.maxParticles = 0
+    this._Particles.startColour = [100, 255, 0, 1]
+    this._Particles.startColourRandom = [48, 50, 45, 0]
+    this._Particles.endColour = [100, 245, 0, 0]
+    this._Particles.endColourRandom = [60, 60, 60, 0]
+
+    this.fillColor("rgba(0,255,20,0.5)")
+  },
+
+  activate: function(){
+    //Give the player a "true" if they have an empty list selected
+    if(game().selectedItems.length == 1)
+    {
+      if(game().selectedItems[0].is_empty)
+      {
+        var item = game().addItem(true)
+        item.history = {
+          predicate: "isEmpty",
+          argument: game().selectedItems[0],
+          counter_argument: [1,2,3]
+        }
+        return
+      }
+    } 
+
+    //Otherwise
+    var item = game().addItem(false)
+    item.history = {
+      predicate: "isEmpty",
+      argument: game().selectedItems,
+      counter_argument: []
+    }
+  }
+});
+
+Crafty.c('HeadChest', {
+  init: function(){
+    this.requires("Chest")
+
+    this._Particles.maxParticles = 0
+    this._Particles.startColour = [255, 0, 0, 1]
+    this._Particles.startColourRandom = [48, 50, 45, 0]
+    this._Particles.endColour = [245, 0, 0, 0]
+    this._Particles.endColourRandom = [60, 60, 60, 0]
+
+    this.fillColor("rgba(255,20,20,0.5)")
+  },
+
+  activate: function(){
+    game().createAndLog(function(game){
+        if(game.selectedItems[0] && game.selectedItems[0].has("Linkable"))
+        {
+          game.selectedItems[0].unlinkNext()
+          game.selectedItems[0].trigger("DoubleClick")
+          return
+        }
+    })
+  }
+});
+
+Crafty.c('ConstantChest', {
+  init: function(){
+    this.requires("Chest")
+
+    this._Particles.maxParticles = 0
+    this._Particles.startColour = [255, 0, 0, 1]
+    this._Particles.startColourRandom = [48, 50, 45, 0]
+    this._Particles.endColour = [245, 0, 0, 0]
+    this._Particles.endColourRandom = [60, 60, 60, 0]
+
+    this.fillColor("rgba(255,20,244,0.5)")
+
+    //Use the global hack
+    after_constant_entered = this.after_enter
+  },
+
+  activate: function(){
+      document.getElementById("input").style.zIndex = "1"
+      document.getElementById("get_constant").style.display = "block"
+  },
+
+  after_enter: function(){
+      document.getElementById("input").style.zIndex = "-1"
+      document.getElementById("get_constant_input").value = ""
+      document.getElementById("get_constant").style.display = "none"
+      game().addItem(last_entered_constant)
+  }
+});
+
+Crafty.c('RecursionChest', {
+  init: function(){
+    this.requires("Chest")
+
+    this._Particles.maxParticles = 9
+    this._Particles.startColour = [255, 0, 0, 1]
+    this._Particles.startColourRandom = [48, 50, 45, 0]
+    this._Particles.endColour = [245, 0, 0, 0]
+    this._Particles.endColourRandom = [60, 60, 60, 0]
+
+    this.fillColor("rgba(0,0,0,0.5)")
+  },
+
+  activate: function(){
+    //Should add an item of the type returned by main()
+    game().addItem("?")
+  }
+});
+
 Crafty.c('Hideable', {
   hide: function(){
     this.visible = false
@@ -105,13 +390,19 @@ Crafty.c('Selectable', {
   },
 
   select: function(){
-    this._Particles.size = 50
-    this._Particles.sizeRandom = 4
+    var id = this[0]
+    game().createAndLog(function(game){
+      game.Crafty(id)._Particles.size = 50
+      game.Crafty(id)._Particles.sizeRandom = 4
+    })
   },
 
   unselect: function() {
-    this._Particles.size = 0
-    this._Particles.sizeRandom = 0
+    var id = this[0]
+    game().createAndLog(function(game){
+      game.Crafty(id)._Particles.size = 0
+      game.Crafty(id)._Particles.sizeRandom = 0
+    });
   },
 
   toggle: function(){
@@ -133,6 +424,24 @@ Crafty.c('Item', {
 
     this.requires('Block, Draggable, Linkable, Recordable, Selectable, Mouse')
     .bind("EnterFrame", function(){this.recordMove(me)})
+
+  },
+
+  setText: function(data){
+    var text = Crafty.e('2D, Canvas, Text, Hideable')
+    .attr({
+       x: this._x,
+       y: this._y - 2,
+       w: Game.inventory_grid.tile.width - this.border_size*2,
+       h: Game.inventory_grid.tile.height - this.border_size*2,
+       z: 2
+     })
+     .textFont({ type: 'italic', family: 'Arial', size: '10px', weight: 'bold' })
+     .textColor("#FFFFFF")
+     .text(data)
+
+    this.attach(text)
+    return this
   }
 
 })
@@ -180,29 +489,40 @@ Crafty.c('Linkable', {
     other._prev = this
 
     var me = this;
-    var line = Crafty.e("Line")
-    this.line_to_next = line
+    this.line_to_next = Crafty.e("Line")
     this.bind("Move", function(){
       Crafty.DrawManager.drawAll()
-      if(!this.visible) return;
-      line.from_x(me._x+8)
-      line.from_y(me._y+8)
-      line.to_x(other._x+8)
-      line.to_y(other._y+8)
+      if(!this.visible || !me.line_to_next) return;
+      me.line_to_next.from_x(me._x+8)
+      me.line_to_next.from_y(me._y+8)
+      me.line_to_next.to_x(other._x+8)
+      me.line_to_next.to_y(other._y+8)
     });
     other.bind("Move", function(){
       Crafty.DrawManager.drawAll()
-      if(!this.visible) return;
-      line.from_x(me._x+8)
-      line.from_y(me._y+8)
-      line.to_x(other._x+8)
-      line.to_y(other._y+8)
+      if(!this.visible || !me.line_to_next) return;
+      me.line_to_next.from_x(me._x+8)
+      me.line_to_next.from_y(me._y+8)
+      me.line_to_next.to_x(other._x+8)
+      me.line_to_next.to_y(other._y+8)
     });
+  },
+
+  unlinkNext: function(){
+    if(this._next)
+        this._next._prev = undefined;
+
+    this._next = undefined;
+
+    if(this.line_to_next)
+        this.line_to_next.visible = false
+
+    this.trigger("Move")
   },
 
   hideLink: function(){
     if(this.line_to_next)
-        this.line_to_next.visible = false
+      this.line_to_next.visible = false
     this.trigger("Move")
   },
 
@@ -237,54 +557,15 @@ Crafty.c("Recordable", {
     this._recordingEnabled = true
   },
 
-  _recordedMoves: [], //Crafty is weird.  This array ends up shared by all Recordables
-
   recordMove: function(obj){
     if(this._recordingEnabled)
-        this._recordedMoves.push({x:this._x,y:this._y, obj: obj})
+        game()._recordedMoves.push({type: "move", x:this._x,y:this._y, id: obj[0], obj: function(crafty){return crafty(this.id)}})
   },
 
   disableRecording: function(){
     this._recordingEnabled = false
   },
 
-  replayMoves: function(){
-
-    this._replay(this._recordedMoves)
-  },
-
-  _replay: function(moves){
-    if(moves.length == 0)
-        return;
-
-
-    for(var i = 0; i < moves.length; i++)
-    {
-        (function(i, moves){
-            setTimeout(function(){
-                var move = moves[i]
-
-                //Turn off gravity
-                if(move.obj.antigravity)
-                    move.obj.antigravity()
-
-                //Turn off user input
-                if(move.obj.disableControl)
-                    move.obj.disableControl()
-
-                //Turn off recording
-                move.obj.disableRecording()
-
-                move.obj.x = move.x
-                move.obj.y = move.y
-            }, i*10);
-        })(i,moves)
-
-    }
-
-
-
-  }
 });
  
 Crafty.c('Actor', {
@@ -311,6 +592,7 @@ Crafty.c('Border', {
       .color(options.color)
 
     this.attach(border)
+    this.border_size = options.size
     return this
   }
 })
@@ -326,7 +608,7 @@ Crafty.c('PlayerCharacter', {
   init: function() {
     var me = this
 
-    this.requires('Actor, Fourway, Color, Collision, Gravity, Recordable, Selectable, Hideable')
+    this.requires('Actor, Fourway, Color, Collision, Gravity, Recordable, Selectable, Hideable, Mouse')
       .fourway(4)
       .color('rgb(20, 75, 40)')
       .onHit('Solid', this.stopMovement)
@@ -334,10 +616,22 @@ Crafty.c('PlayerCharacter', {
       .onHit('Village', this.visitVillage)
       .gravity("Solid")
       .gravityConst(.1)
-      .bind("EnterFrame", function(){this.recordMove(me)});
+      .bind("EnterFrame", function(){this.recordMove(me)})
+      .onHit("Chest", this.triggerChest)
+      .bind("Change", this.triggerChestExit)
+      .bind("DoubleClick", this.selectPlayer)
+      .setContext(game().addContext())
+
+     this.disableControls = true
 
      character = this;
 
+     game().players.push(this)
+
+  },
+
+  setContext: function(c){
+    this._inventory_context = c 
   },
 
   // Registers a stop-movement function to be called when
@@ -355,7 +649,47 @@ Crafty.c('PlayerCharacter', {
       this.x -= this._movement.x;
       this.y -= this._movement.y;
     }
-  }
+  },
+
+  triggerChest: function(data){
+    this._last_chest = data[0].obj
+    this._last_chest.activateWithCooldown(this);
+  },
+
+
+  triggerChestExit: function(){
+    //So we don't keep activating the chest over and over
+    if(!this.hit("Chest") && this._last_chest)
+    {
+        this._last_chest.reactivate();
+        this._last_chest = undefined
+    }
+  },
+
+  _last_chest: undefined,
+
+  unselectPlayer: function(){
+      this.unselect()
+      this.disableControls = true
+      this._control_enabled = false
+  },
+
+  selectPlayer: function(){
+      var players = game().players
+      for(var i = 0; i < players.length; i++)
+      {
+        players[i].unselectPlayer()
+      }
+
+      this.select()
+      this.disableControls = false
+      this._control_enabled = true
+      console.log(this._inventory_context)
+      game().switchContext(this._inventory_context)
+  },
+
+  _control_enabled: false
+
 
 
 });
