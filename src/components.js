@@ -1,3 +1,4 @@
+
 Crafty.c("Game", {
   init: function(){
     this.requires("World, Inventory")
@@ -67,6 +68,8 @@ Crafty.c("Game", {
         (function(i, moves){
             setTimeout(function(){
                 var move = moves[i]
+
+                //console.log(move.id)
 
                 if(move.type == "move")
                 {
@@ -213,28 +216,35 @@ Crafty.c('IsListEmptyChest', {
   },
 
   activate: function(){
-    //Give the player a "true" if they have an empty list selected
-    if(game().selectedItems.length == 1)
-    {
-      if(game().selectedItems[0].is_empty)
+    if(game()._replayMode)
+      return
+
+    if(!game().selectedItems[0])
+      return
+
+    var group = game().selectedItems[0].inventory_group_name
+
+    game().createAndLog(function(game){
+
+      var list = game.getByGroupName(group)
+
+      if(list.length == 1 && list[0].is_empty)
       {
-        var item = game().addItem(true, ""+this.next_var_name++)
+        var item = game.addItem(true, ""+this.next_var_name++)
         item.history = {
           predicate: "isEmpty",
-          argument: game().selectedItems[0],
+          argument: list[0],
           counter_argument: [1,2,3]
         }
-        return
-      }
-    } 
-
-    //Otherwise
-    var item = game().addItem(false, ""+this.next_var_name++)
-    item.history = {
-      predicate: "isEmpty",
-      argument: game().selectedItems,
-      counter_argument: []
-    }
+      } else {
+        var item = game.addItem(false, ""+this.next_var_name++)
+        item.history = {
+          predicate: "isEmpty",
+          argument: list,
+          counter_argument: []
+        }
+     }
+    });
   }
 });
 
@@ -453,8 +463,8 @@ Crafty.c('Item', {
   init: function(){
     var me = this
 
-    this.requires('Block, Draggable, Linkable, Recordable, Selectable, Mouse')
-    .bind("EnterFrame", function(){this.recordMove(me)})
+    this.requires('Block, Draggable, Linkable, Selectable, Mouse')
+    //.bind("EnterFrame", function(){this.recordMove(me)})
 
   },
 
@@ -632,7 +642,7 @@ Crafty.c('Border', {
  
 Crafty.c('Block', {
   init: function() {
-    this.requires('Actor, Color, Solid, Border, Recordable, Hideable')
+    this.requires('Actor, Color, Solid, Border, Hideable')
       .color('rgb(20, 185, 40)')
   }
 });

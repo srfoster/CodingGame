@@ -19,6 +19,29 @@
       showGame(2)
       game(2).replayMoves(game(1)._recordedMoves)
     }
+
+    function testIsEmpty(){
+      //Input for the write mode
+      game(1).afterPlayer = function(){game(1).addItem([1,2,3], "input")}
+
+      //Input for the execution
+      game(2).afterPlayer = function(){game(2).addItem([], "input")}
+
+      game(1).createPlayer()
+      game(1).createChest("IsListEmptyChest")
+    }
+
+    function testHead(){
+      //Input for the write mode
+      game(1).afterPlayer = function(){game(1).addItem([1,2,3], "input")}
+
+      //Input for the execution
+      game(2).afterPlayer = function(){game(2).addItem([4,3], "input")}
+
+      game(1).createPlayer()
+      game(1).createChest("HeadChest")
+    }
+
   </script>
  </head>
  <body style="margin: 0px; padding: 0px;">

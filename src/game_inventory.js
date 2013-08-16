@@ -42,8 +42,6 @@ Crafty.c("Inventory", {
 
         if (at_edge) {
 
-
-          // Place a tree entity at the current tile
           Crafty.e('Block')
             .attr({
               x: x * Game.map_grid.tile.width,
