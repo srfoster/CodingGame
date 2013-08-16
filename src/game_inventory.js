@@ -1,5 +1,6 @@
 Crafty.c("Inventory", {
   init: function(){
+    this.addContext()
   },  
 
   addContext: function(){
@@ -56,41 +57,67 @@ Crafty.c("Inventory", {
     return this
   },
 
-  addItem: function(data) {
+  addItemAndLog: function(data, group_name) {
     return game().createAndLog(function(game){
+        var ret = undefined
         if(typeof data === "number" || typeof data === "string"){
-          return game.addInteger(data)  
+          ret = game.addInteger(data)  
         } else if(typeof data === "boolean") {
-          return game.addBoolean(data)  
+          ret = game.addBoolean(data)  
         } else if (typeof data == "object" && data.length != undefined) {
-          return game.addArray(data)  
+          ret = game.addArray(data)  
         } else {
           //Shouldn't get here ever.
           alert("Error.  Inventory could not recognize that data.")
         }
+
+        if(group_name)
+          game.setGroupName(ret, group_name)
+
+        return ret
     })
   },
 
-  addItemNoLog: function(data) {
+  addItem: function(data, group_name) {
+        var ret = undefined
+
         if(typeof data === "number" || typeof data === "string"){
-          return this.addInteger(data)  
+          ret = this.addInteger(data)  
         } else if(typeof data === "boolean") {
-          return this.addBoolean(data)  
+          ret = this.addBoolean(data)  
         } else if (typeof data == "object" && data.length != undefined) {
-          return this.addArray(data)  
+          ret = this.addArray(data)  
         } else {
           //Shouldn't get here ever.
           alert("Error.  Inventory could not recognize that data.")
         }
+
+        if(group_name)
+          this.setGroupName(ret, group_name)
+
+        return ret
+  },
+
+  setGroupName: function(data, group_name)
+  {
+      if (data instanceof Array) {
+        for(var i = 0; i < data.length; i++){
+          data[i].inventory_group_name = group_name
+        }
+      } else {
+          data.inventory_group_name = group_name
+      }
   },
 
   addArray: function(data){
     var blocks = []
     var last_block = undefined;
+
+
     for(var i = 0; i < data.length; i++)
     {
 
-      var block = this.addItemNoLog(data[i])
+      var block = this.addItem(data[i])
 
       if(last_block == undefined)
       {
@@ -105,6 +132,7 @@ Crafty.c("Inventory", {
     
     //Add the empty list at the end
     var block = this.addEmpty();
+
     if(last_block)
         last_block.link(block);
     blocks.push(block)
@@ -128,14 +156,15 @@ Crafty.c("Inventory", {
         
      block.is_empty = true
 
-        this.items().push(block)
-      
-        var me = this
+     this.items().push(block)
+  
+     var me = this
 
-        block.bind("DoubleClick", function(){me.select(block)})
-    this._slotNumber++;
+     block.bind("DoubleClick", function(){me.select(block)})
 
-    return block
+     this._slotNumber++;
+
+     return block
   },
 
   addBoolean: function(data){
@@ -163,14 +192,14 @@ Crafty.c("Inventory", {
             .border({size: border_size, color:"white"})
             .setText(bool_letter)
 
-            block.type = "boolean"
+      block.type = "boolean"
 
-       this.items().push(block)
+      this.items().push(block)
 
-        block.bind("DoubleClick", function(){me.select(block)})
-    this._slotNumber++;
+      block.bind("DoubleClick", function(){me.select(block)})
+      this._slotNumber++;
 
-    return block
+      return block
   },
 
   addInteger: function(data){
@@ -275,7 +304,18 @@ Crafty.c("Inventory", {
     return this.currentContext().items
   },
 
-  selectedItems: []
+  selectedItems: [],
+
+  getByGroupName: function(name){
+    var ret = []
+
+    for(var i = 0; i < this.items().length; i++){
+      if(this.items()[i].inventory_group_name == name)
+        ret.push(this.items()[i])
+    }
+
+    return ret
+  }
 
 });
 

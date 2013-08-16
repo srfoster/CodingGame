@@ -11,17 +11,38 @@ Crafty.c("Game", {
 
     this.Crafty = Crafty
   },
+
+  findByRecordingId: function(id){
+    for(var i=0;i<this.recordables.length;i++)
+    {
+      if(this.recordables[i]._recordingId == id)
+        return this.recordables[i]
+    }
+  },
+
   players: [],
+
+  recordables: [],
+
+  _replayMode: false,
+
+  next_var_name: 0,
   
   createPlayer: function(){
     return this.createAndLog(function(game){
-      game.Crafty.e('PlayerCharacter').at(5, 5)
+      var player = game.Crafty.e('PlayerCharacter').at(5, 5)
+
+      if(game.afterPlayer)
+         game.afterPlayer()
+
+      player._recordingId = "Player"
     })
   },
 
   createChest: function(name){
     return this.createAndLog(function(game){
-      game.Crafty.e(name)
+      var chest = game.Crafty.e(name)
+      chest._recordingId = "Chest" + game.recordables.length
     })
   },
 
@@ -37,6 +58,7 @@ Crafty.c("Game", {
   },
 
   replayMoves: function(moves){
+    this._replayMode = true
     if(moves.length == 0)
         return;
 
@@ -48,22 +70,29 @@ Crafty.c("Game", {
 
                 if(move.type == "move")
                 {
+                    if(!move.id || !move.obj(game()))
+                       return
+
+                    if(!move.obj(game()).disableRecording)
+                       return
+
+
                     //Turn off gravity
-                    if(move.obj(Crafty).antigravity)
-                        move.obj(Crafty).antigravity()
+                    if(move.obj(game()).antigravity)
+                        move.obj(game()).antigravity()
 
                     //Turn off user input
-                    if(move.obj(Crafty).disableControl)
-                        move.obj(Crafty).disableControl()
+                    if(move.obj(game()).disableControl)
+                        move.obj(game()).disableControl()
 
                     //Turn off recording
-                    move.obj(Crafty).disableRecording()
+                    move.obj(game()).disableRecording()
 
-                    if(move.obj(Crafty).x != move.x)
-                        move.obj(Crafty).x = move.x
+                    if(move.obj(game()).x != move.x)
+                        move.obj(game()).x = move.x
 
-                    if(move.obj(Crafty).y != move.y)
-                        move.obj(Crafty).y = move.y
+                    if(move.obj(game()).y != move.y)
+                        move.obj(game()).y = move.y
                 } else if (move.type == "create"){
                     move.create(game())
                 }
@@ -154,7 +183,6 @@ Crafty.c('ForkChest', {
   },
 
   activate: function(player){
-   
     if(!game().selectedItems[0] || game().selectedItems[0].type != "boolean")
       return;
 
@@ -165,7 +193,7 @@ Crafty.c('ForkChest', {
       });
 
     game().switchContext(new_player._inventory_context)
-    game().addItem(game().selectedItems[0].history.counter_argument)
+    game().addItem(game().selectedItems[0].history.counter_argument, game().selectedItems[0].history.argument.inventory_group_name)
     game().switchContext(player._inventory_context)
   }
 });
@@ -190,7 +218,7 @@ Crafty.c('IsListEmptyChest', {
     {
       if(game().selectedItems[0].is_empty)
       {
-        var item = game().addItem(true)
+        var item = game().addItem(true, ""+this.next_var_name++)
         item.history = {
           predicate: "isEmpty",
           argument: game().selectedItems[0],
@@ -201,7 +229,7 @@ Crafty.c('IsListEmptyChest', {
     } 
 
     //Otherwise
-    var item = game().addItem(false)
+    var item = game().addItem(false, ""+this.next_var_name++)
     item.history = {
       predicate: "isEmpty",
       argument: game().selectedItems,
@@ -224,14 +252,18 @@ Crafty.c('HeadChest', {
   },
 
   activate: function(){
-    game().createAndLog(function(game){
-        if(game.selectedItems[0] && game.selectedItems[0].has("Linkable"))
-        {
-          game.selectedItems[0].unlinkNext()
-          game.selectedItems[0].trigger("DoubleClick")
-          return
-        }
-    })
+    if(game()._replayMode)
+      return
+
+    if(game().selectedItems[0] && game().selectedItems[0].has("Linkable"))
+    {
+      var group = game().selectedItems[0].inventory_group_name
+
+      game().createAndLog(function(game){
+        game.getByGroupName(group)[0].unlinkNext()
+        game.getByGroupName(group)[0].trigger("DoubleClick")
+      })
+    }
   }
 });
 
@@ -252,15 +284,20 @@ Crafty.c('ConstantChest', {
   },
 
   activate: function(){
-      document.getElementById("input").style.zIndex = "1"
-      document.getElementById("get_constant").style.display = "block"
+    if(game()._replayMode)
+      return
+
+    document.getElementById("input").style.zIndex = "1"
+    document.getElementById("get_constant").style.display = "block"
   },
 
   after_enter: function(){
       document.getElementById("input").style.zIndex = "-1"
       document.getElementById("get_constant_input").value = ""
       document.getElementById("get_constant").style.display = "none"
-      game().addItem(last_entered_constant)
+      game().createAndLog(function(game){
+        game.addItem(last_entered_constant, "" + this.next_var_name++)
+      });
   }
 });
 
@@ -279,7 +316,7 @@ Crafty.c('RecursionChest', {
 
   activate: function(){
     //Should add an item of the type returned by main()
-    game().addItem("?")
+    game().addItem("?", "" + this.next_var_name++)
   }
 });
 
@@ -390,19 +427,13 @@ Crafty.c('Selectable', {
   },
 
   select: function(){
-    var id = this[0]
-    game().createAndLog(function(game){
-      game.Crafty(id)._Particles.size = 50
-      game.Crafty(id)._Particles.sizeRandom = 4
-    })
+    this._Particles.size = 50
+    this._Particles.sizeRandom = 4
   },
 
   unselect: function() {
-    var id = this[0]
-    game().createAndLog(function(game){
-      game.Crafty(id)._Particles.size = 0
-      game.Crafty(id)._Particles.sizeRandom = 0
-    });
+    this._Particles.size = 0
+    this._Particles.sizeRandom = 0
   },
 
   toggle: function(){
@@ -555,11 +586,13 @@ Crafty.c('Grid', {
 Crafty.c("Recordable", {
   init: function(){
     this._recordingEnabled = true
+
+    game().recordables.push(this)
   },
 
   recordMove: function(obj){
     if(this._recordingEnabled)
-        game()._recordedMoves.push({type: "move", x:this._x,y:this._y, id: obj[0], obj: function(crafty){return crafty(this.id)}})
+        game()._recordedMoves.push({type: "move", x:this._x,y:this._y, id: obj._recordingId, obj: function(game){return game.findByRecordingId(this.id)}})
   },
 
   disableRecording: function(){
@@ -616,11 +649,19 @@ Crafty.c('PlayerCharacter', {
       .onHit('Village', this.visitVillage)
       .gravity("Solid")
       .gravityConst(.1)
-      .bind("EnterFrame", function(){this.recordMove(me)})
       .onHit("Chest", this.triggerChest)
       .bind("Change", this.triggerChestExit)
       .bind("DoubleClick", this.selectPlayer)
-      .setContext(game().addContext())
+      .bind("EnterFrame", function(){this.recordMove(me)})
+
+
+     //If it's the first player, give them the default context
+     if(game().contexts.length == 1)
+       this.setContext(0) 
+
+     //Otherwise, make a new context in the inventory
+     else
+       this.setContext(game().addContext())
 
      this.disableControls = true
 
@@ -684,7 +725,6 @@ Crafty.c('PlayerCharacter', {
       this.select()
       this.disableControls = false
       this._control_enabled = true
-      console.log(this._inventory_context)
       game().switchContext(this._inventory_context)
   },
 
