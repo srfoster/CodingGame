@@ -270,12 +270,17 @@ Crafty.c('HeadChest', {
       var group = game().selectedItems[0].inventory_group_name
 
       game().createAndLog(function(game){
+
+        console.log(group)
+
         game.getByGroupName(group)[0].unlinkNext()
+        game.getByGroupName(group)[0].inventory_group_name = ""+this.next_var_name++
         game.getByGroupName(group)[0].trigger("DoubleClick")
       })
     }
   }
 });
+
 
 Crafty.c('ConstantChest', {
   init: function(){
@@ -301,13 +306,13 @@ Crafty.c('ConstantChest', {
     document.getElementById("get_constant").style.display = "block"
   },
 
-  after_enter: function(){
-      document.getElementById("input").style.zIndex = "-1"
-      document.getElementById("get_constant_input").value = ""
-      document.getElementById("get_constant").style.display = "none"
-      game().createAndLog(function(game){
-        game.addItem(last_entered_constant, "" + this.next_var_name++)
-      });
+  after_enter: function(constant){
+    document.getElementById("input").style.zIndex = "-1"
+    document.getElementById("get_constant_input").value = ""
+    document.getElementById("get_constant").style.display = "none"
+    game().createAndLog(function(game){
+      game.addItem(constant, "" + game.next_var_name++)
+    });
   }
 });
 

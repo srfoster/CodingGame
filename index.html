@@ -8,10 +8,11 @@
   <script src="src/game_inventory.js"></script>
   <script src="src/components.js"></script>
   <script>
+
     function enterConstant(e){
       if (e.keyCode == 13) {
-          last_entered_constant = parseInt(document.getElementById("get_constant_input").value) 
-          after_constant_entered()
+          var constant = eval(document.getElementById("get_constant_input").value)
+          after_constant_entered(constant)
       }
     } 
 
