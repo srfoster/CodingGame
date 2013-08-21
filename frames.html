@@ -3,6 +3,28 @@
   <script src="lib/seedrandom.js"></script>
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script>
+    $(document).ready(function(){
+      newGame();
+      newGame();
+      newGame();
+    });
+
+    var game_stack = []
+    var game_number = 0
+    var callbacks = {}
+
+
+    function newGame(callback){
+       var html = '<iframe class="game" id="game_'+(++game_number)+'" style="width: 100%; height: 100%; border:none; position: absolute" src="/index.html?id='+game_number+'&seed=1"></iframe>'
+
+       $("body").prepend(html)
+
+       if(callback){
+           var num = game_number
+           callbacks[game_number] = function(){callback(num)}
+       }
+    }
+
     function showGame(i)
     {
       $(".game").hide();
@@ -11,21 +33,85 @@
   
     function game(i)
     {
+      if(i == undefined)
+        i = game_number
+
       return $("#game_"+i)[0].contentWindow.game()
     }
 
-    function replay()
+    function functionCall(retTo, toCall, input)
     {
-      showGame(2)
-      game(2).replayMoves(game(1)._recordedMoves)
+      var new_game = newGame(
+        function(num){
+          game(num).input = input
+          game(num).retTo = retTo
+
+          //Presumably this is all we have to do to make a copy of the toCall game.
+          // It's basically a new game with the same replay stream, so it should act the same way.
+          // At this time, all of the maps are the same...
+          game(num)._replayStreams = toCall._replayStreams
+
+          //Pause previous 
+          pause(game(num-1))
+
+          //Show new
+          showGame(num)
+          game(num).replay()
+       }
+     )
+    }
+
+
+    function replay(input)
+    {
+      game(3).input = input
+      showGame(3)
+
+      //A function definition is a game
+      // with a list of streams (programs) attached -- 
+      // each of which is guarded by a match on the input
+
+
+      //Game 1 is the empty list case
+      game(3).addReplayStream(
+        function(game){
+          var list = game.input
+          return list.length == 0
+        },
+        game(1)._recordedMoves)
+
+
+      //Game 2 is the non-empty list case
+      if(game(2).input){
+          game(3).addReplayStream(
+            function(game){
+              var list = game.input
+              return list.length > 0
+            },
+            game(2)._recordedMoves)
+      }
+
+      game(3).replay()
+    }
+
+    function pause(game){
+      game.stopReplay()
+    }
+
+    function testMatch(){
+      game(1).input = []
+      game(2).input = [1,2,3]
+
+      game(1).createPlayer()
+      game(2).createPlayer()
+
+      game(1).createChest("ConstantChest")
+      game(2).createChest("ConstantChest")
     }
 
     function testIsEmpty(){
       //Input for the write mode
-      game(1).afterPlayer = function(){game(1).addItem([1,2,3], "input")}
-
-      //Input for the execution
-      game(2).afterPlayer = function(){game(2).addItem([], "input")}
+      game(1).input = [1,2,3]
 
       game(1).createPlayer()
       game(1).createChest("IsListEmptyChest")
@@ -33,10 +119,7 @@
 
     function testConstant(){
       //Input for the write mode
-      game(1).afterPlayer = function(){game(1).addItem([1,2,3], "input")}
-
-      //Input for the execution
-      game(2).afterPlayer = function(){game(2).addItem([4,5], "input")}
+      game(1).input = [1,2,3]
 
       game(1).createPlayer()
       game(1).createChest("ConstantChest")
@@ -44,19 +127,26 @@
 
     function testHead(){
       //Input for the write mode
-      game(1).afterPlayer = function(){game(1).addItem([1,2,3], "input")}
-
-      //Input for the execution
-      game(2).afterPlayer = function(){game(2).addItem([4,3], "input")}
+      game(1).input = [1,2,3]
 
       game(1).createPlayer()
       game(1).createChest("HeadChest")
     }
 
+    function testRecursion(){
+      game(1).input = []
+      game(1).createPlayer()
+      game(1).createChest("ConstantChest")
+
+      showGame(2)
+      game(2).input = [1,2,3]
+      game(2).createPlayer()
+      game(2).createChest("RecursionChest")
+      game(2).createChest("HeadChest")
+    }
+
   </script>
  </head>
  <body style="margin: 0px; padding: 0px;">
-  <iframe class="game" id="game_2" style="width: 100%; height: 100%; border:none; position: absolute" src="/index.html?seed=1"></iframe>
-  <iframe class="game" id="game_1" style="width: 100%; height: 100%; border:none; position: absolute" src="/index.html?seed=1"></iframe>
  </body>
 </html>

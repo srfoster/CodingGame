@@ -1,0 +1,7 @@
+The user plays through several games,
+  each with a different input.
+  (Auto generated based on structure of input.)
+
+Each game's stream is combined into another game, guarded by the appropriate structural check on the input. 
+
+The new game is replayed -- which may result in the spawning of new copies of that game, but each copy will be exactly the same, except for the input (e.g. same streams).  Ultimately, the recursion should bottom out, and the games will be destroyed, leaving only the original, with some output.

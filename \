@@ -1,3 +1,4 @@
+
 Crafty.c("Game", {
   init: function(){
     this.requires("World, Inventory")
@@ -10,12 +11,6 @@ Crafty.c("Game", {
     .drawInventory()
 
     this.Crafty = Crafty
-
-    console.log("Started Game "+myId())
-
-    if(top.callbacks && top.callbacks[myId()])
-      top.callbacks[myId()]()
-
   },
 
   findByRecordingId: function(id){
@@ -52,10 +47,6 @@ Crafty.c("Game", {
     })
   },
 
-  log: function(fun){
-     game()._recordedMoves.push({type: "create", create: fun})
-  },
-
   createAndLog: function(fun){
      game()._recordedMoves.push({type: "create", create: fun})
      return fun(this)
@@ -73,10 +64,6 @@ Crafty.c("Game", {
   },
 
   replay: function(){
-    console.log("Replaying in " + myId())
-    console.log("Input is:")
-    console.log(this.input)
-
     for(var i=0; i<this._replayStreams.length; i++)
     {
       var cond_stream = this._replayStreams[i]
@@ -301,8 +288,11 @@ Crafty.c('HeadChest', {
       var group = game().selectedItems[0].inventory_group_name
 
       game().createAndLog(function(game){
+
+        console.log(group)
+
         game.getByGroupName(group)[0].unlinkNext()
-        game.getByGroupName(group)[0].inventory_group_name = ""+game.next_var_name++
+        game.getByGroupName(group)[0].inventory_group_name = ""+this.next_var_name++
         game.getByGroupName(group)[0].trigger("DoubleClick")
       })
     }
@@ -365,24 +355,21 @@ Crafty.c('RecursionChest', {
     game().addItem("?", "" + this.next_var_name++)
 
 
-    if(!game().selectedItems[0])
-      return;
-
     //Record recursive call
     var group = game().selectedItems[0].inventory_group_name
 
-    game().log(function(game){
+    this.createAndLog(function(game){
       var to_pass = game.getByGroupName(group)  
+
       //The value in the appropriate variable must be the input
       // for another copy of this game.
-      
+      //
       //Pass it up to the runtime to create the new instance
       // and start it.  And to pause this instance
-      runtime().functionCall(game, game, game.jsify(to_pass))  
+      ...  
     });
   }
 });
-
 
 Crafty.c('Hideable', {
   hide: function(){

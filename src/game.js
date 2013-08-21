@@ -2,6 +2,10 @@ function game(){
   return the_game
 }
 
+function runtime(){
+  return top;
+}
+
 Game = {
   // This defines our grid's size and the size of each of its tiles
   map_grid: {

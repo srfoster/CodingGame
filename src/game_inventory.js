@@ -55,6 +55,23 @@ Crafty.c("Inventory", {
     return this
   },
 
+  jsify: function(item){
+    if(item instanceof Array)
+    {
+      var ret = []
+
+      for(var i=0; i<item.length; i++)
+      {
+        if(!item[i].is_empty)
+          ret.push(item[i].data)
+      }
+
+      return ret
+    } else {
+      return item.data
+    }
+  },
+
   addItemAndLog: function(data, group_name) {
     return game().createAndLog(function(game){
         var ret = undefined
@@ -192,6 +209,8 @@ Crafty.c("Inventory", {
 
       block.type = "boolean"
 
+      block.data = data
+
       this.items().push(block)
 
       block.bind("DoubleClick", function(){me.select(block)})
@@ -224,6 +243,7 @@ Crafty.c("Inventory", {
 
             me.items().push(block)
 
+     block.data = data
 
         block.bind("DoubleClick", function(){me.select(block)})
     this._slotNumber++;
