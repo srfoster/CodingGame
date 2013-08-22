@@ -13,6 +13,11 @@
     var game_number = 0
     var callbacks = {}
 
+    function quickLog(message)
+    {
+      $("#log").html(message)
+    }
+
 
     function newGame(callback){
        var html = '<iframe class="game" id="game_'+(++game_number)+'" style="width: 100%; height: 100%; border:none; position: absolute" src="/index.html?id='+game_number+'&seed=1"></iframe>'
@@ -61,6 +66,25 @@
      )
     }
 
+    function ret(result)
+    {
+      console.log("Returning")  
+      console.log(result)
+
+      destroy(game_number)
+      
+      showGame(--game_number)
+      
+      game(game_number).addItem(result, ""+game(game_number).next_var_name++)  
+
+      unpause(game(game_number))
+    }
+
+    function destroy(num)
+    {
+      $("#game_"+num).remove()
+    }
+
 
     function replay(input)
     {
@@ -98,6 +122,10 @@
       game.stopReplay()
     }
 
+    function unpause(game){
+      game.replay()
+    }
+
     function testMatch(){
       game(1).input = []
       game(2).input = [1,2,3]
@@ -133,10 +161,17 @@
       game(1).createChest("HeadChest")
     }
 
+
+    //Run this,
+    // Do something in game 2  
+    // Switch to game 1
+    // Return a constant
+    // then: replay([1])
     function testRecursion(){
       game(1).input = []
       game(1).createPlayer()
       game(1).createChest("ConstantChest")
+      game(1).createChest("ReturnChest")
 
       showGame(2)
       game(2).input = [1,2,3]
@@ -145,8 +180,10 @@
       game(2).createChest("HeadChest")
     }
 
+
   </script>
  </head>
  <body style="margin: 0px; padding: 0px;">
+   <div id="log"></div>
  </body>
 </html>

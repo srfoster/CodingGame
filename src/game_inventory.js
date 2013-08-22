@@ -1,3 +1,4 @@
+
 Crafty.c("Inventory", {
   init: function(){
     this.addContext()
@@ -56,14 +57,25 @@ Crafty.c("Inventory", {
   },
 
   jsify: function(item){
+    console.log("Jsifiy")
+    console.log(item)
     if(item instanceof Array)
     {
-      var ret = []
-
-      for(var i=0; i<item.length; i++)
+      if(item[0].is_empty)
       {
-        if(!item[i].is_empty)
-          ret.push(item[i].data)
+        return []
+      } else if (!item[0]._next) {
+        return item[0].data
+      } else {
+
+          var ret = []
+
+          for(var i=0; i<item.length; i++)
+          {
+            if(!item[i].is_empty)
+              ret.push(item[i].data)
+          }
+
       }
 
       return ret

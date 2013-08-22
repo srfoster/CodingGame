@@ -106,6 +106,9 @@ Crafty.c("Game", {
   replayMove: function(moves){
     var move = moves[this.current_move++]
 
+    if(move == undefined)
+        clearInterval(this.replay_interval)
+
     if(move.type == "move")
     {
         if(!move.id || !move.obj(game()))
@@ -383,6 +386,37 @@ Crafty.c('RecursionChest', {
   }
 });
 
+Crafty.c('ReturnChest', {
+  init: function(){
+    this.requires("Chest")
+
+    this._Particles.maxParticles = 9
+    this._Particles.startColour = [255, 0, 0, 1]
+    this._Particles.startColourRandom = [48, 50, 45, 0]
+    this._Particles.endColour = [245, 0, 0, 0]
+    this._Particles.endColourRandom = [60, 60, 60, 0]
+
+    this.fillColor("rgba(255,255,255,0.5)")
+  },
+
+  activate: function(){
+    if(game()._replayMode)
+      return
+
+    if(!game().selectedItems[0])
+      return;
+
+    //Record recursive call
+    var group = game().selectedItems[0].inventory_group_name
+
+    game().log(function(game){
+      var to_pass = game.getByGroupName(group)  
+      runtime().ret(game.jsify(to_pass))  
+    });
+  }
+});
+
+
 
 Crafty.c('Hideable', {
   hide: function(){
@@ -659,7 +693,29 @@ Crafty.c("Recordable", {
       return
 
     if(this._recordingEnabled)
-        game()._recordedMoves.push({type: "move", x:this._x,y:this._y, id: obj._recordingId, obj: function(game){return game.findByRecordingId(this.id)}})
+    {
+        var move = {type: "move", x:this._x,y:this._y, id: obj._recordingId, obj: function(game){return game.findByRecordingId(this.id)}}
+
+        var last_move = this.lastMoveFor(move.id)
+
+
+
+        if(last_move == undefined || last_move.x != move.x || last_move.y != move.y)
+        {
+          game()._recordedMoves.push(move)
+        }
+    }
+  },
+
+  lastMoveFor: function(id){
+    if(game()._recordedMoves == undefined || game()._recordedMoves.length == 0)
+        return undefined;
+
+    for(var i = game()._recordedMoves.length - 1; i--; i > 0)
+    {
+      if(game()._recordedMoves[i].id == id)
+          return game()._recordedMoves[i]
+    }
   },
 
   disableRecording: function(){
@@ -667,7 +723,7 @@ Crafty.c("Recordable", {
   },
 
 });
- 
+
 Crafty.c('Actor', {
   init: function() {
     this.requires('2D, Canvas, Grid');
