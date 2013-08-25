@@ -127,6 +127,8 @@ Crafty.c("Inventory", {
 
   setGroupName: function(data, group_name)
   {
+      console.log("x"+group_name+"="+this.jsify(data))
+
       if (data instanceof Array) {
         for(var i = 0; i < data.length; i++){
           data[i].inventory_group_name = group_name

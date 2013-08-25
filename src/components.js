@@ -235,6 +235,53 @@ Crafty.c('ForkChest', {
   }
 });
 
+Crafty.c('AddChest', {
+  init: function(){
+    this.requires("Chest")
+
+    this._Particles.maxParticles = 0
+    this.fillColor("rgba(255,255,20,0.5)")
+  },
+
+  activate: function(player){
+    if(game()._replayMode)
+      return;
+
+    if(!game().selectedItems[0])
+      return
+
+    if(game().selectedItems[0]._next || game().selectedItems[0].is_empty) //Ignore if the player has a list selected
+      return
+
+    if(this.first_number_group == undefined)
+    {
+       this.first_number_group = game().selectedItems[0].inventory_group_name
+       return
+     }
+
+     var first_number_group = this.first_number_group
+     var second_number_group = game().selectedItems[0].inventory_group_name
+
+    game().createAndLog(function(game){
+        var next_group = ""+ game.next_var_name++
+        console.log("x"+next_group + " = " + first_number_group + " + " + second_number_group) 
+
+        var first_number = game.jsify(game.getByGroupName(first_number_group))
+        var second_number = game.jsify(game.getByGroupName(second_number_group))
+
+        console.log("x"+next_group + " = " + first_number_group + "("+first_number+") + " + second_number_group + "("+second_number+")")
+
+        var answer = first_number + second_number
+
+        game.addItem(answer, next_group) 
+
+        this.first_number = undefined
+    })
+  },
+
+  first_number_group: undefined
+});
+
 
 Crafty.c('IsListEmptyChest', {
   init: function(){
@@ -264,14 +311,14 @@ Crafty.c('IsListEmptyChest', {
 
       if(list.length == 1 && list[0].is_empty)
       {
-        var item = game.addItem(true, ""+this.next_var_name++)
+        var item = game.addItem(true, ""+game().next_var_name++)
         item.history = {
           predicate: "isEmpty",
           argument: list[0],
           counter_argument: [1,2,3]
         }
       } else {
-        var item = game.addItem(false, ""+this.next_var_name++)
+        var item = game.addItem(false, ""+game().next_var_name++)
         item.history = {
           predicate: "isEmpty",
           argument: list,
@@ -305,7 +352,10 @@ Crafty.c('HeadChest', {
 
       game().createAndLog(function(game){
         game.getByGroupName(group)[0].unlinkNext()
-        game.getByGroupName(group)[0].inventory_group_name = ""+game.next_var_name++
+
+        var next_group_name = game.next_var_name++
+        console.log("x"+next_group_name+"="+game.jsify(game.getByGroupName(group)[0]))
+        game.getByGroupName(group)[0].inventory_group_name = ""+next_group_name
         game.getByGroupName(group)[0].trigger("DoubleClick")
       })
     }
@@ -364,12 +414,13 @@ Crafty.c('RecursionChest', {
     if(game()._replayMode)
       return
 
-    //Should add an item of the type returned by main()
-    game().addItem("?", "" + this.next_var_name++)
-
-
     if(!game().selectedItems[0])
       return;
+
+    //Should add an item of the type returned by main()
+    game().addItem("?", "" + game().next_var_name++)
+
+    console.log("Added ? at " + (game().next_var_name - 1))
 
     //Record recursive call
     var group = game().selectedItems[0].inventory_group_name
@@ -408,6 +459,8 @@ Crafty.c('ReturnChest', {
 
     //Record recursive call
     var group = game().selectedItems[0].inventory_group_name
+
+
 
     game().log(function(game){
       var to_pass = game.getByGroupName(group)  
