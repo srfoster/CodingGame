@@ -25,6 +25,8 @@ Crafty.c("Game", {
         return this.recordables[i]
     }
   },
+ 
+  return_type: "Int",
 
   players: [],
 
@@ -45,10 +47,18 @@ Crafty.c("Game", {
     })
   },
 
-  createChest: function(name){
+  createChest: function(name, x, y){
     return this.createAndLog(function(game){
       var chest = game.Crafty.e(name)
       chest._recordingId = "Chest" + game.recordables.length
+
+      if(x && y)
+      {
+        chest.attr({
+          x: x,
+          y: y
+        })
+      }
     })
   },
 
@@ -235,12 +245,9 @@ Crafty.c('ForkChest', {
   }
 });
 
-Crafty.c('AddChest', {
+Crafty.c('BinOpChest', {
   init: function(){
     this.requires("Chest")
-
-    this._Particles.maxParticles = 0
-    this.fillColor("rgba(255,255,20,0.5)")
   },
 
   activate: function(player){
@@ -250,38 +257,144 @@ Crafty.c('AddChest', {
     if(!game().selectedItems[0])
       return
 
-    if(game().selectedItems[0]._next || game().selectedItems[0].is_empty) //Ignore if the player has a list selected
-      return
 
     if(this.first_number_group == undefined)
     {
+
+      if(this.var_1_type == "Int")
+      {
+        if(game().selectedItems[0]._next || game().selectedItems[0].is_empty) //Ignore if the player has a list selected
+          return
+      } else if(this.var_1_type == "List") {
+        if(!(game().selectedItems[0]._next || game().selectedItems[0].is_empty)) //Ignore if the player has a list selected
+          return
+      }
+
        this.first_number_group = game().selectedItems[0].inventory_group_name
+       this.fillColor(this._fill_color.replace("0.5","0.9"))
        return
      }
 
+      if(this.var_2_type == "Int")
+      {
+        if(game().selectedItems[0]._next || game().selectedItems[0].is_empty) //Ignore if the player has a list selected
+          return
+      } else if(this.var_2_type == "List") {
+        if(!(game().selectedItems[0]._next || game().selectedItems[0].is_empty)) //Ignore if the player has a list selected
+          return
+      }
+
      var first_number_group = this.first_number_group
      var second_number_group = game().selectedItems[0].inventory_group_name
+
+
+     var me = this
 
     game().createAndLog(function(game){
         var next_group = ""+ game.next_var_name++
         console.log("x"+next_group + " = " + first_number_group + " + " + second_number_group) 
 
-        var first_number = game.jsify(game.getByGroupName(first_number_group))
-        var second_number = game.jsify(game.getByGroupName(second_number_group))
+        me.operation(next_group, first_number_group, second_number_group, game)
 
-        console.log("x"+next_group + " = " + first_number_group + "("+first_number+") + " + second_number_group + "("+second_number+")")
-
-        var answer = first_number + second_number
-
-        game.addItem(answer, next_group) 
-
-        this.first_number = undefined
+        me.first_number_group = undefined;
+        me.second_number_group = undefined;
+        me.fillColor(me._fill_color.replace("0.9","0.5"))
     })
   },
 
   first_number_group: undefined
 });
 
+
+
+Crafty.c('AddChest', {
+  init: function(){
+    this.requires("BinOpChest")
+
+    this._Particles.maxParticles = 0
+    this.fillColor("rgba(255,255,20,0.5)")
+  },
+
+  var_1_type: "Int",
+  var_2_type: "Int",
+
+  operation: function(assign_var, var_1, var_2, game){
+    var first_number = parseInt(game.jsify(game.getByGroupName(var_1)))
+    var second_number = parseInt(game.jsify(game.getByGroupName(var_2)))
+
+    if(isNaN(first_number) || isNaN(second_number))
+      answer = "?"
+    else
+      answer = first_number + second_number
+
+    game.addItem(answer, assign_var) 
+  }
+});
+
+
+//1 concat 2 = [1,2]
+Crafty.c('ConcatChest', {
+  init: function(){
+    this.requires("BinOpChest")
+
+    this._Particles.maxParticles = 0
+    this.fillColor("rgba(100,255,100,0.5)")
+  },
+
+  var_1_type: "Int",
+  var_2_type: "Int",
+
+  operation: function(assign_var, var_1, var_2, game){
+    var first_number = parseInt(game.jsify(game.getByGroupName(var_1)))
+    var second_number = parseInt(game.jsify(game.getByGroupName(var_2)))
+
+    game.addItem([first_number, second_number], assign_var) 
+  }
+});
+
+//1 cons [2,3] = [1,2,3]
+Crafty.c('ConsChest', {
+  init: function(){
+    this.requires("BinOpChest")
+
+    this._Particles.maxParticles = 0
+    this.fillColor("rgba(100,255,255,0.5)")
+  },
+
+  var_1_type: "Int",
+  var_2_type: "List",
+
+  operation: function(assign_var, var_1, var_2, game){
+    var first_number = parseInt(game.jsify(game.getByGroupName(var_1)))
+    var list = game.jsify(game.getByGroupName(var_2))
+
+    list.unshift(first_number)
+
+    game.addItem(list, assign_var) 
+  }
+});
+
+//[2,3] cons 1 = [2,3,1]
+Crafty.c('RConsChest', {
+  init: function(){
+    this.requires("BinOpChest")
+
+    this._Particles.maxParticles = 0
+    this.fillColor("rgba(100,50,255,0.5)")
+  },
+
+  var_1_type: "List",
+  var_2_type: "Int",
+
+  operation: function(assign_var, var_1, var_2, game){
+    var list = game.jsify(game.getByGroupName(var_1))
+    var second_number = parseInt(game.jsify(game.getByGroupName(var_2)))
+
+    list.push(second_number)
+
+    game.addItem(list, assign_var) 
+  }
+});
 
 Crafty.c('IsListEmptyChest', {
   init: function(){
@@ -401,7 +514,7 @@ Crafty.c('RecursionChest', {
   init: function(){
     this.requires("Chest")
 
-    this._Particles.maxParticles = 9
+    this._Particles.maxParticles = 0
     this._Particles.startColour = [255, 0, 0, 1]
     this._Particles.startColourRandom = [48, 50, 45, 0]
     this._Particles.endColour = [245, 0, 0, 0]
@@ -417,14 +530,26 @@ Crafty.c('RecursionChest', {
     if(!game().selectedItems[0])
       return;
 
+    var group = game().selectedItems[0].inventory_group_name
+    var list = game().jsify(game().getByGroupName(group))
+
     //Should add an item of the type returned by main()
-    game().addItem("?", "" + game().next_var_name++)
+    var answer = runtime().oracle().sum(list);
+    
+    if(answer)
+      game().addItem(answer, "" + game().next_var_name++);
+    else
+    {
+      if(game().return_type == "Int")
+          game().addItem("?", "" + game().next_var_name++);
+      if(game().return_type == "List")
+          game().addItem(["?"], "" + game().next_var_name++);
+    }
 
     console.log("Added ? at " + (game().next_var_name - 1))
 
-    //Record recursive call
-    var group = game().selectedItems[0].inventory_group_name
 
+    //Record recursive call
     game().log(function(game){
       var to_pass = game.getByGroupName(group)  
       //The value in the appropriate variable must be the input
@@ -441,7 +566,7 @@ Crafty.c('ReturnChest', {
   init: function(){
     this.requires("Chest")
 
-    this._Particles.maxParticles = 9
+    this._Particles.maxParticles = 0
     this._Particles.startColour = [255, 0, 0, 1]
     this._Particles.startColourRandom = [48, 50, 45, 0]
     this._Particles.endColour = [245, 0, 0, 0]
@@ -460,15 +585,14 @@ Crafty.c('ReturnChest', {
     //Record recursive call
     var group = game().selectedItems[0].inventory_group_name
 
-
-
     game().log(function(game){
       var to_pass = game.getByGroupName(group)  
       runtime().ret(game.jsify(to_pass))  
     });
+
+    runtime().done(myId()) 
   }
 });
-
 
 
 Crafty.c('Hideable', {

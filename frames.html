@@ -3,9 +3,34 @@
   <script src="lib/seedrandom.js"></script>
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script>
+
     $(document).ready(function(){
-      newGame();
-      newGame();
+      newGame("#ide_games");
+      newGame("#ide_games");
+
+
+      $("#exec").click(function(){
+        replay(eval($("#exec_input").val()))
+      });
+
+      $("#return_type").click(function(){
+        if($("#return_type").html() == "Int")
+        {
+          $("#return_type").html("List")
+          changeReturnType("List")
+          return
+        }
+
+        if($("#return_type").html() == "List")
+        {
+          $("#return_type").html("Int")
+          changeReturnType("Int")
+          return
+        }
+      });
+
+      $("#ide_games").show()
+      $("#stack").hide()
     });
 
     var game_stack = []
@@ -13,16 +38,37 @@
     var bottom_of_stack = undefined
     var callbacks = {}
 
+    var finished = 0
+
+    function changeReturnType(type){
+      var len = $("#ide_games").children().length
+
+      for(var i=0; i< len; i++)
+      {
+        game(i+1).return_type = type
+      }
+    }
+
+    function oracle(){
+    }
+
     function quickLog(message)
     {
       $("#log").html(message)
     }
 
+    function done(id)
+    {
+      finished++
+      $("#game_"+id).fadeOut()
+    }
 
-    function newGame(callback){
-       var html = '<iframe class="game" id="game_'+(++game_number)+'" style="width: 720px; height: 370px; border:none; position: absolute; top: '+game_number*5+'px; left: '+game_number*5+'px;border: 1px solid black; background-color:white; z-index: '+game_number+'" src="/index.html?id='+game_number+'&seed=1"></iframe>'
 
-       $("#games").prepend(html)
+
+    function newGame(container, callback){
+       var html = '<iframe class="game" id="game_'+(++game_number)+'" style="width: 720px; height: 370px;  position: absolute; top: '+game_number*7+'px; left: '+game_number*7+'px;border: 2px solid black; background-color:white; z-index: '+game_number+'" src="/index.html?id='+game_number+'&seed=1"></iframe>'
+
+       $(container).prepend(html)
 
        if(callback){
            var num = game_number
@@ -50,7 +96,7 @@
 
     function functionCall(retTo, toCall, input)
     {
-      var new_game = newGame(
+      var new_game = newGame("#stack",
         function(num){
           game(num).input = input
           game(num).retTo = retTo
@@ -81,12 +127,15 @@
       {
         $("#answer").html("result = " + result)
         showGame(game_number)
+        $("#ide_games").show()
+        $("#stack").hide()
       } else {
         showGame(game_number)
           
         game(game_number).addItem(result, ""+game(game_number).next_var_name++)  
 
         unpause(game(game_number))
+
       }
     }
 
@@ -99,7 +148,11 @@
     function replay(input)
     {
       bottom_of_stack = game_number
-      newGame(function(num){
+
+      $("#ide_games").hide();
+      $("#stack").show();
+
+      newGame("#stack", function(num){
           game(num).input = input
           showGame(num)
 
@@ -195,11 +248,90 @@
     }
 
 
+    function sumTest(){
+      game(1).input = []
+      game(1).createPlayer()
+
+      game(2).input = [1,2,3]
+      game(2).createPlayer()
+
+      oracle = function(){
+        return {
+          sum: function(list){
+            var list = list.toString();
+            if(list == [1,2].toString())
+              return 3
+
+            if(list == [2,3].toString())
+              return 5
+
+            if(list == [1].toString())
+              return 1
+              
+            if(list == [2].toString())
+              return 2
+
+            if(list == [].toString())
+              return 0
+
+            return undefined;
+          }
+        }
+      }
+    }
+
+    function arith(){
+      game(1).createChest("AddChest", 200, 20)
+      game(2).createChest("AddChest", 200, 20)
+    }
+
+    function list(){
+      game(1).createChest("RecursionChest", 410, 280)
+      game(1).createChest("HeadChest", 300, 20)
+      game(1).createChest("ReturnChest", 20, 280)
+      game(1).createChest("ConstantChest", 30, 80)
+      game(1).createChest("ConcatChest", 150, 10)
+      game(1).createChest("ConsChest", 400, 35)
+
+      game(2).createChest("RecursionChest", 410, 280)
+      game(2).createChest("HeadChest", 300, 20)
+      game(2).createChest("ReturnChest", 20, 280)
+      game(2).createChest("ConstantChest", 30, 80)
+      game(2).createChest("ConcatChest", 150, 10)
+      game(2).createChest("ConsChest", 400, 35)
+      game(2).createChest("RConsChest", 140, 200)
+    }
+
+
   </script>
  </head>
  <body style="margin: 0px; padding: 0px;">
    <div id="log"></div>
-   <div style="width:100%; height:100%" id="games"></div>
-   <div style="margin-top: -30px; margin-left: 100px" id="answer"></div>
+   <div style="width:100%; height:400px" id="ide_games"></div>
+   <div style="width:100%; height:400px" id="stack"></div>
+
+   <div style="height:50px;">
+       <div style="cursor:pointer; margin-top: 10px; float: left; margin-left: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: purple; padding: 5px;" onclick="list()">
+          List      
+       </div>
+       <div style="cursor:pointer; margin-top: 10px; float: left; margin-left: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: orange; padding: 5px;" onclick="arith()">
+          Arith
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumTest()">
+          Sum      
+       </div>
+   </div>
+   <div style="margin-left: auto; margin-right: auto; width:90%; height: 60px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 20px">
+       <input id="exec_input" type="text"></input>
+       <button id="exec">Execute</button>
+       <br/>
+       Returning:<button id="return_type">Int</button>
+       <br/>
+       <div id="answer"></div>
+   </div>
+
+
+
  </body>
 </html>
