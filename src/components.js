@@ -528,7 +528,7 @@ Crafty.c('HeadChest', {
     if(game()._replayMode)
       return
 
-    if(game().selectedItems[0] && game().selectedItems[0].has("Linkable"))
+    if(game().selectedItems[0] && game().selectedItems[0].has("Linkable") && game().selectedItems[0]._next)
     {
       var group = game().selectedItems[0].inventory_group_name
 
@@ -545,6 +545,7 @@ Crafty.c('HeadChest', {
 
   }
 });
+
 
 
 Crafty.c('ConstantChest', {
@@ -1023,9 +1024,9 @@ Crafty.c('PlayerCharacter', {
   init: function() {
     var me = this
 
-    this.requires('Actor, Fourway, Color, Collision, Gravity, Recordable, Selectable, Hideable, Mouse')
+    this.requires('Actor, Fourway, Color, Collision, Gravity, Recordable, Selectable, Hideable, Mouse, SpriteAnimation, spr_player')
       .fourway(4)
-      .color('rgb(20, 75, 40)')
+      .color('rgba(20, 75, 40,0)')
       .onHit('Solid', this.stopMovement)
       .stopOnSolids()
       .onHit('Village', this.visitVillage)
@@ -1033,8 +1034,27 @@ Crafty.c('PlayerCharacter', {
       .gravityConst(.1)
       .onHit("Chest", this.triggerChest)
       .bind("Change", this.triggerChestExit)
-      .bind("DoubleClick", this.selectPlayer)
+      //.bind("DoubleClick", this.selectPlayer)
       .bind("EnterFrame", function(){this.recordMove(me)})
+      .animate('PlayerMovingUp',    0, 0, 2)
+      .animate('PlayerMovingRight', 0, 1, 2)
+      .animate('PlayerMovingDown',  0, 2, 2)
+      .animate('PlayerMovingLeft',  0, 3, 2)
+
+    var animation_speed = 8;
+    this.bind('NewDirection', function(data) {
+      if (data.x > 0) {
+        this.animate('PlayerMovingRight', animation_speed, -1);
+      } else if (data.x < 0) {
+        this.animate('PlayerMovingLeft', animation_speed, -1);
+      } else if (data.y > 0) {
+        this.animate('PlayerMovingDown', animation_speed, -1);
+      } else if (data.y < 0) {
+        this.animate('PlayerMovingUp', animation_speed, -1);
+      } else {
+        this.stop();
+      }
+    });
 
 
      //If it's the first player, give them the default context
@@ -1045,7 +1065,7 @@ Crafty.c('PlayerCharacter', {
      else
        this.setContext(game().addContext())
 
-     this.disableControls = true
+     //this.disableControls = true
 
      character = this;
 

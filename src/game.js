@@ -56,6 +56,10 @@ Game = {
           spr_blue_block:    [1, 1]
         });
 
+        Crafty.sprite(32, 'assets/characters/hunter.png', {
+          spr_player:    [0, 2]
+        });
+
         Crafty.sprite(50, 'assets/chests.png', {
           spr_add_chest:    [0, 0],
           spr_mul_chest:    [1, 0],
