@@ -18,7 +18,7 @@ Crafty.c("World", {
            var at_edge = x == this._worldOffsetX || x == this._worldOffsetX + this._worldWidth - 1 || y == this._worldOffsetY || y == this._worldOffsetY + this._worldHeight - 1;
  
         if (at_edge) {
-          Crafty.e('Block')
+          Crafty.e('Block, spr_green_block')
             .attr({
               x: x * Game.map_grid.tile.width,
               y: y * Game.map_grid.tile.height,
@@ -26,7 +26,7 @@ Crafty.c("World", {
               h: Game.map_grid.tile.height
             })
         } else if (Math.random() < 0.06) {
-          Crafty.e('Block')
+          Crafty.e('Block, spr_green_block')
             .attr({
               x: x * Game.map_grid.tile.width,
               y: y * Game.map_grid.tile.height,

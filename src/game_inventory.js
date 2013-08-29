@@ -43,7 +43,7 @@ Crafty.c("Inventory", {
 
         if (at_edge) {
 
-          Crafty.e('Block')
+          Crafty.e('Block, spr_red_block')
             .attr({
               x: x * Game.map_grid.tile.width,
               y: y * Game.map_grid.tile.height,

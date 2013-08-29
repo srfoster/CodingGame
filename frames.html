@@ -5,9 +5,24 @@
   <script>
 
     $(document).ready(function(){
-      newGame("#ide_games");
-      newGame("#ide_games");
-
+      newGame("#ide_games",
+        function(num){
+          game(num).input = []      
+          game(num).condition = 
+            function(game){
+              var list = game.input
+              return list.length == 0
+            }
+        });
+      newGame("#ide_games",
+        function(num){
+          game(num).input = [1,2,3]     
+          game(num).condition = 
+            function(game){
+              var list = game.input
+              return list.length >= 0
+            }
+        });
 
       $("#exec").click(function(){
         replay(eval($("#exec_input").val()))
@@ -29,6 +44,26 @@
         }
       });
 
+      $("#toggle_consoles").click(
+        function(){
+          if($("#write_console").css("display") == "none"){
+            $("#write_console").css("display", "block")
+            $("#execute_console").css("display", "none")
+          } else {
+            $("#write_console").css("display", "none")
+            $("#execute_console").css("display", "block")
+          }
+        }
+      );
+
+      $("#new_match").click(
+        function(){
+          var val = eval($("#new_match_input").val())
+      
+          newMatch(val)
+        }
+      )
+
       $("#ide_games").show()
       $("#stack").hide()
     });
@@ -39,6 +74,29 @@
     var callbacks = {}
 
     var finished = 0
+
+    function first_game()
+    {
+      return game(1)
+    }
+
+    function last_game()
+    {
+      return game($("#ide_games").children().length)
+    }
+
+    function newMatch(val, callback)
+    {
+       newGame("#ide_games",function(num){
+         game(num).input = val
+         game(num).condition = function(game){
+           return game.input.length == val.length
+         }
+
+         if(callback)
+           callback(num)
+       });
+    }
 
     function changeReturnType(type){
       var len = $("#ide_games").children().length
@@ -160,24 +218,22 @@
           // with a list of streams (programs) attached -- 
           // each of which is guarded by a match on the input
 
-          //Game 1 is the empty list case
-          game(num).addReplayStream(
-            function(game){
-              var list = game.input
-              return list.length == 0
-            },
-            game(1)._recordedMoves)
+          var len = $("#ide_games").children().length
 
-
-          //Game 2 is the non-empty list case
-          if(game(2).input){
-              game(num).addReplayStream(
-                function(game){
-                  var list = game.input
-                  return list.length > 0
-                },
-                game(2)._recordedMoves)
+          for(var i=1; i <= len; i++)
+          {
+              if(i != 2) //Currently the most abstract match cond
+              {
+                  game(num).addReplayStream(
+                    game(i).condition,
+                    game(i)._recordedMoves)
+              }
           }
+
+          //Make sure to add game 2 last...
+          game(num).addReplayStream(
+            game(2).condition,
+            game(2)._recordedMoves)
 
           game(num).replay()
       });
@@ -191,69 +247,265 @@
       game.replay()
     }
 
-    function testMatch(){
-      game(1).input = []
-      game(2).input = [1,2,3]
+    function mapTimesCTest(){
+      first_game().createPlayer()
+      first_game().return_type = "List"
+      first_game().createChest("ReturnChest", 20, 280)
 
-      game(1).createPlayer()
-      game(2).createPlayer()
+      last_game().createPlayer()
+      last_game().return_type = "List"
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("RecursionChest", 410, 280)
+      last_game().createChest("HeadChest", 300, 20)
+      last_game().createChest("ConstantChest", 30, 80)
+      last_game().createChest("MultChest", 200, 20)
+      last_game().createChest("ConsChest", 400, 35)
 
-      game(1).createChest("ConstantChest")
-      game(2).createChest("ConstantChest")
+      oracle = function(){
+        return {
+          sum: function(list){
+            var list = list.toString();
+            if(list == [1,2].toString())
+              return [6,7]
+
+            if(list == [2,3].toString())
+              return [7,8]
+
+            if(list == [1].toString())
+              return [6]
+              
+            if(list == [2].toString())
+              return [7]
+
+            if(list == [].toString())
+              return []
+
+            return undefined;
+          }
+        }
+      }
+    }
+    
+
+    function add1st2(){
+      first_game().createPlayer()
+      first_game().createChest("ConstantChest", 30, 80)
+      first_game().createChest("ReturnChest", 20, 280)
+
+      last_game().createPlayer()
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("HeadChest", 300, 20)
+      last_game().createChest("AddChest", 200, 20)
     }
 
-    function testIsEmpty(){
-      //Input for the write mode
-      game(1).input = [1,2,3]
 
-      game(1).createPlayer()
-      game(1).createChest("IsListEmptyChest")
+    function mapPlusCTest(){
+      first_game().createPlayer()
+      first_game().return_type = "List"
+      first_game().createChest("ReturnChest", 20, 280)
+
+      last_game().createPlayer()
+      last_game().return_type = "List"
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("RecursionChest", 410, 280)
+      last_game().createChest("HeadChest", 300, 20)
+      last_game().createChest("ConstantChest", 30, 80)
+      last_game().createChest("AddChest", 200, 20)
+      last_game().createChest("ConsChest", 400, 35)
+
+      oracle = function(){
+        return {
+          sum: function(list){
+            var list = list.toString();
+            if(list == [1,2].toString())
+              return [6,7]
+
+            if(list == [2,3].toString())
+              return [7,8]
+
+            if(list == [1].toString())
+              return [6]
+              
+            if(list == [2].toString())
+              return [7]
+
+            if(list == [].toString())
+              return []
+
+            return undefined;
+          }
+        }
+      }
     }
 
-    function testConstant(){
-      //Input for the write mode
-      game(1).input = [1,2,3]
+    function maxTest(){
+      first_game().createPlayer()
+      first_game().createChest("ConstantChest", 30, 80)
+      first_game().createChest("ReturnChest", 20, 280)
 
-      game(1).createPlayer()
-      game(1).createChest("ConstantChest")
+      last_game().createPlayer()
+      last_game().createChest("MaxChest", 200, 20)
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("RecursionChest", 410, 280)
+      last_game().createChest("HeadChest", 300, 20)
+
+      oracle = function(){
+        return {
+          sum: function(list){
+            var list = list.toString();
+            if(list == [1,2].toString())
+              return 2
+
+            if(list == [2,3].toString())
+              return 3
+
+            if(list == [1].toString())
+              return 1
+              
+            if(list == [2].toString())
+              return 2
+
+            if(list == [].toString())
+              return 0
+
+            return undefined;
+          }
+        }
+      }
     }
 
-    function testHead(){
-      //Input for the write mode
-      game(1).input = [1,2,3]
+    function reverseTest(){
+      first_game().return_type = "List"
+      first_game().createPlayer()
+      first_game().createChest("ReturnChest", 20, 280)
 
-      game(1).createPlayer()
-      game(1).createChest("HeadChest")
+      last_game().return_type = "List"
+      last_game().createPlayer()
+      last_game().createChest("RConsChest", 140, 200)
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("RecursionChest", 410, 280)
+      last_game().createChest("HeadChest", 300, 20)
+
+      oracle = function(){
+        return {
+          sum: function(list){
+            var list = list.toString();
+            if(list == [1,2].toString())
+              return [2,1]
+
+            if(list == [2,3].toString())
+              return [3,2]
+
+            if(list == [1].toString())
+              return [1]
+              
+            if(list == [2].toString())
+              return [2]
+
+            if(list == [].toString())
+              return []
+
+            return undefined;
+          }
+        }
+      }
     }
 
+    function evenOddTest(){
+      first_game().createPlayer()
+      first_game().createChest("ConstantChest", 30, 80)
+      first_game().createChest("ReturnChest", 20, 280)
 
-    //Run this,
-    // Do something in game 2  
-    // Switch to game 1
-    // Return a constant
-    // then: replay([1])
-    function testRecursion(){
-      game(1).input = []
-      game(1).createPlayer()
-      game(1).createChest("ConstantChest")
-      game(1).createChest("ReturnChest")
+      last_game().createPlayer()
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("RecursionChest", 410, 280)
+      last_game().createChest("HeadChest", 300, 20)
 
-      showGame(2)
-      game(2).input = [1,2,3]
-      game(2).createPlayer()
-      game(2).createChest("RecursionChest")
-      game(2).createChest("HeadChest")
-      game(2).createChest("ReturnChest")
-      game(2).createChest("AddChest")
+      newMatch([1], function(num){
+          game(num).createPlayer()
+          game(num).createChest("ReturnChest", 20, 280)
+          game(num).createChest("RecursionChest", 410, 280)
+          game(num).createChest("HeadChest", 300, 20)
+
+          oracle = function(){
+            return {
+              sum: function(list){
+                var list = list.toString();
+                if(list == [1,2].toString())
+                  return 0
+
+                if(list == [2,3].toString())
+                  return 0
+
+                if(list == [3].toString())
+                  return 1
+
+                if(list == [].toString())
+                  return 0
+
+                return undefined;
+              }
+            }
+          }
+      })
     }
+
+    function sumEveryOtherTest(){
+
+      newGame("#ide_games", function(num){
+          first_game().input = []
+          first_game().createPlayer()
+          first_game().createChest("ConstantChest", 30, 80)
+          first_game().createChest("ReturnChest", 20, 280)
+
+          last_game().input = [1]
+          last_game().createPlayer()
+          last_game().createChest("HeadChest", 300, 20)
+          last_game().createChest("ReturnChest", 20, 280)
+
+          game(num).input = [1,2,3]
+          game(num).createPlayer()
+          game(num).createChest("ReturnChest", 20, 280)
+          game(num).createChest("RecursionChest", 410, 280)
+          game(num).createChest("HeadChest", 300, 20)
+          game(num).createChest("AddChest", 200, 20)
+
+          oracle = function(){
+            return {
+              sum: function(list){
+                var list = list.toString();
+                if(list == [1,2].toString())
+                  return 1
+
+                if(list == [2,3].toString())
+                  return 2
+
+                if(list == [3].toString())
+                  return 3
+
+                if(list == [].toString())
+                  return 0
+
+                return undefined;
+              }
+            }
+          }
+      })
+
+    }
+
 
 
     function sumTest(){
-      game(1).input = []
-      game(1).createPlayer()
+      first_game().createPlayer()
+      first_game().createChest("ConstantChest", 30, 80)
+      first_game().createChest("ReturnChest", 20, 280)
 
-      game(2).input = [1,2,3]
-      game(2).createPlayer()
+      last_game().createPlayer()
+      last_game().createChest("AddChest", 200, 20)
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("RecursionChest", 410, 280)
+      last_game().createChest("HeadChest", 300, 20)
 
       oracle = function(){
         return {
@@ -281,28 +533,34 @@
     }
 
     function arith(){
-      game(1).createChest("AddChest", 200, 20)
-      game(2).createChest("AddChest", 200, 20)
+      for(var v=1; v<=game_number; v++){
+          game(v).createChest("AddChest", 200, 20)
+          game(v).createChest("ConstantChest", 30, 80)
+      }
+    }
+
+    function player(){
+      
+      for(var v=1; v<=game_number; v++){
+        game(v).createPlayer()
+      }
     }
 
     function list(){
-      game(1).createChest("RecursionChest", 410, 280)
-      game(1).createChest("HeadChest", 300, 20)
-      game(1).createChest("ReturnChest", 20, 280)
-      game(1).createChest("ConstantChest", 30, 80)
-      game(1).createChest("ConcatChest", 150, 10)
-      game(1).createChest("ConsChest", 400, 35)
-
-      game(2).createChest("RecursionChest", 410, 280)
-      game(2).createChest("HeadChest", 300, 20)
-      game(2).createChest("ReturnChest", 20, 280)
-      game(2).createChest("ConstantChest", 30, 80)
-      game(2).createChest("ConcatChest", 150, 10)
-      game(2).createChest("ConsChest", 400, 35)
-      game(2).createChest("RConsChest", 140, 200)
+      for(var v=1; v<=game_number; v++){
+          game(v).createChest("HeadChest", 300, 20)
+          game(v).createChest("ConcatChest", 150, 10)
+          game(v).createChest("ConsChest", 390, 35)
+          game(v).createChest("RConsChest", 420, 200)
+      }
     }
 
-
+    function fun(){
+      for(var v=1; v<=game_number; v++){
+          game(v).createChest("RecursionChest", 410, 280)
+          game(v).createChest("ReturnChest", 20, 280)
+      }
+    }
   </script>
  </head>
  <body style="margin: 0px; padding: 0px;">
@@ -311,25 +569,71 @@
    <div style="width:100%; height:400px" id="stack"></div>
 
    <div style="height:50px;">
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumTest()">
+          Sum      
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="maxTest()">
+          Max      
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="reverseTest()">
+          Reverse      
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumEveryOtherTest()">
+          SumEO
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="evenOddTest()">
+          E/O
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="mapPlusCTest()">
+          Map+C
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="mapTimesCTest()">
+          Map*C
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="add1st2()">
+          Add1st2
+       </div>
+   </div>
+   <div style="margin-left: auto; margin-right: auto; width:90%; height: 80px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 20px">
+       <span id="toggle_consoles" style="cursor:pointer; color: black; text-decoration: underline">Toggle Consoles</span>
+       <br/>
+       <br/>
+
+       <div id="execute_console" style="display:none">
+           <input id="exec_input" type="text"></input>
+           <button id="exec">Execute</button>
+           <br/>
+           <div id="answer"></div>
+       </div>
+
+       <div id="write_console">
+          <input id="new_match_input" type="text"></input>
+          <button id="new_match">New Match</button>
+          <br/>
+          Returning:<button id="return_type">Int</button>
+       </div>
+       <br/>
+   </div>
+
        <div style="cursor:pointer; margin-top: 10px; float: left; margin-left: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: purple; padding: 5px;" onclick="list()">
           List      
        </div>
        <div style="cursor:pointer; margin-top: 10px; float: left; margin-left: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: orange; padding: 5px;" onclick="arith()">
           Arith
        </div>
-
-       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumTest()">
-          Sum      
+       <div style="cursor:pointer; margin-top: 10px; float: left; margin-left: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: green; padding: 5px;" onclick="fun()">
+          Fun
        </div>
-   </div>
-   <div style="margin-left: auto; margin-right: auto; width:90%; height: 60px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 20px">
-       <input id="exec_input" type="text"></input>
-       <button id="exec">Execute</button>
-       <br/>
-       Returning:<button id="return_type">Int</button>
-       <br/>
-       <div id="answer"></div>
-   </div>
+       <div style="cursor:pointer; margin-top: 10px; float: left; margin-left: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: teal; padding: 5px;" onclick="player()">
+          Player
+       </div>
 
 
 

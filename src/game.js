@@ -48,12 +48,38 @@ Game = {
   },
  
   start: function(){
-    Crafty.init(Game.width(), Game.height());
-    Crafty.background('rgb(0, 0, 0)');
+    Crafty.load(['assets/block_tile.png', 'assets/chests.png'], function(){
+        Crafty.sprite(16, 'assets/block_tile.png', {
+          spr_green_block:    [0, 0],
+          spr_red_block:    [1, 0],
+          spr_purple_block:    [0, 1],
+          spr_blue_block:    [1, 1]
+        });
 
-    document.getElementById("input").style.width = Game.width() + "px"
+        Crafty.sprite(50, 'assets/chests.png', {
+          spr_add_chest:    [0, 0],
+          spr_mul_chest:    [1, 0],
+          spr_con_chest:    [2, 0],
+          spr_rcon_chest:   [3, 0],
+          spr_max_chest:    [0, 1],
+          spr_cat_chest:    [1, 1],
+          spr_pop_chest:    [2, 1],
+          spr_emp_chest:    [3, 1],
+          spr_inp_chest:    [0, 2],
+          spr_rec_chest:    [1, 2],
+          spr_ret_chest:    [2, 2]
+        });
 
-    Crafty.e("Game")
-  
+        Crafty.audio.add({
+            chest: ["assets/beep1.mp3"]
+        })
+
+        Crafty.init(Game.width(), Game.height());
+        Crafty.background('url("/assets/bg.png")');
+
+        document.getElementById("input").style.width = Game.width() + "px"
+
+        Crafty.e("Game")
+    })
   }
 }

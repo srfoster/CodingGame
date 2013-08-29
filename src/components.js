@@ -75,6 +75,9 @@ Crafty.c("Game", {
 
   _replayStreams: [],
 
+  //The match condition
+  condition: function(){ return true },
+
   addReplayStream: function(condition,stream){
     this._replayStreams.push({
       condition: condition,
@@ -206,7 +209,14 @@ Crafty.c('Chest', {
       this._ready = false
       this._Particles.size = 5
 
-      this.activate(avatar)
+
+      if(this.activate(avatar))
+      {
+          Crafty.audio.play("chest",1,1)
+          Crafty.audio.add({
+              chest: ["assets/beep1.mp3"]
+          })
+      }
 
     }
   },
@@ -242,6 +252,8 @@ Crafty.c('ForkChest', {
     game().switchContext(new_player._inventory_context)
     game().addItem(game().selectedItems[0].history.counter_argument, game().selectedItems[0].history.argument.inventory_group_name)
     game().switchContext(player._inventory_context)
+
+    return true
   }
 });
 
@@ -300,6 +312,7 @@ Crafty.c('BinOpChest', {
         me.second_number_group = undefined;
         me.fillColor(me._fill_color.replace("0.9","0.5"))
     })
+    return true
   },
 
   first_number_group: undefined
@@ -309,7 +322,7 @@ Crafty.c('BinOpChest', {
 
 Crafty.c('AddChest', {
   init: function(){
-    this.requires("BinOpChest")
+    this.requires("BinOpChest, spr_add_chest")
 
     this._Particles.maxParticles = 0
     this.fillColor("rgba(255,255,20,0.5)")
@@ -331,11 +344,66 @@ Crafty.c('AddChest', {
   }
 });
 
+Crafty.c('MultChest', {
+  init: function(){
+    this.requires("BinOpChest, spr_mult_chest")
+
+    this._Particles.maxParticles = 0
+    this.fillColor("rgba(200,255,100,0.5)")
+  },
+
+  var_1_type: "Int",
+  var_2_type: "Int",
+
+  operation: function(assign_var, var_1, var_2, game){
+    var first_number = parseInt(game.jsify(game.getByGroupName(var_1)))
+    var second_number = parseInt(game.jsify(game.getByGroupName(var_2)))
+
+    if(isNaN(first_number) || isNaN(second_number))
+      answer = "?"
+    else
+      answer = first_number * second_number
+
+    game.addItem(answer, assign_var) 
+  }
+});
+
+
+Crafty.c('MaxChest', {
+  init: function(){
+    this.requires("BinOpChest, spr_max_chest")
+
+    this._Particles.maxParticles = 0
+    this.fillColor("rgba(255,150,200,0.5)")
+  },
+
+  var_1_type: "Int",
+  var_2_type: "Int",
+
+  operation: function(assign_var, var_1, var_2, game){
+    var first_number = parseInt(game.jsify(game.getByGroupName(var_1)))
+    var second_number = parseInt(game.jsify(game.getByGroupName(var_2)))
+
+    var max = function(x,y){
+      if(x > y)
+        return x
+      return y
+    }
+
+    if(isNaN(first_number) || isNaN(second_number))
+      answer = "?"
+    else
+      answer = max(first_number, second_number)
+
+    game.addItem(answer, assign_var) 
+  }
+});
+
 
 //1 concat 2 = [1,2]
 Crafty.c('ConcatChest', {
   init: function(){
-    this.requires("BinOpChest")
+    this.requires("BinOpChest, spr_cat_chest")
 
     this._Particles.maxParticles = 0
     this.fillColor("rgba(100,255,100,0.5)")
@@ -355,7 +423,7 @@ Crafty.c('ConcatChest', {
 //1 cons [2,3] = [1,2,3]
 Crafty.c('ConsChest', {
   init: function(){
-    this.requires("BinOpChest")
+    this.requires("BinOpChest, spr_con_chest")
 
     this._Particles.maxParticles = 0
     this.fillColor("rgba(100,255,255,0.5)")
@@ -377,7 +445,7 @@ Crafty.c('ConsChest', {
 //[2,3] cons 1 = [2,3,1]
 Crafty.c('RConsChest', {
   init: function(){
-    this.requires("BinOpChest")
+    this.requires("BinOpChest, spr_rcon_chest")
 
     this._Particles.maxParticles = 0
     this.fillColor("rgba(100,50,255,0.5)")
@@ -398,7 +466,7 @@ Crafty.c('RConsChest', {
 
 Crafty.c('IsListEmptyChest', {
   init: function(){
-    this.requires("Chest")
+    this.requires("Chest, spr_emp_chest")
 
     this._Particles.maxParticles = 0
     this._Particles.startColour = [100, 255, 0, 1]
@@ -439,12 +507,13 @@ Crafty.c('IsListEmptyChest', {
         }
      }
     });
+    return true
   }
 });
 
 Crafty.c('HeadChest', {
   init: function(){
-    this.requires("Chest")
+    this.requires("Chest, spr_pop_chest")
 
     this._Particles.maxParticles = 0
     this._Particles.startColour = [255, 0, 0, 1]
@@ -471,14 +540,16 @@ Crafty.c('HeadChest', {
         game.getByGroupName(group)[0].inventory_group_name = ""+next_group_name
         game.getByGroupName(group)[0].trigger("DoubleClick")
       })
+      return true
     }
+
   }
 });
 
 
 Crafty.c('ConstantChest', {
   init: function(){
-    this.requires("Chest")
+    this.requires("Chest, spr_inp_chest")
 
     this._Particles.maxParticles = 0
     this._Particles.startColour = [255, 0, 0, 1]
@@ -498,6 +569,8 @@ Crafty.c('ConstantChest', {
 
     document.getElementById("input").style.zIndex = "1"
     document.getElementById("get_constant").style.display = "block"
+
+    return true
   },
 
   after_enter: function(constant){
@@ -512,7 +585,7 @@ Crafty.c('ConstantChest', {
 
 Crafty.c('RecursionChest', {
   init: function(){
-    this.requires("Chest")
+    this.requires("Chest, spr_rec_chest")
 
     this._Particles.maxParticles = 0
     this._Particles.startColour = [255, 0, 0, 1]
@@ -534,7 +607,10 @@ Crafty.c('RecursionChest', {
     var list = game().jsify(game().getByGroupName(group))
 
     //Should add an item of the type returned by main()
-    var answer = runtime().oracle().sum(list);
+    var answer = undefined
+
+    if(runtime().oracle())
+      answer = runtime().oracle().sum(list);
     
     if(answer)
       game().addItem(answer, "" + game().next_var_name++);
@@ -559,12 +635,16 @@ Crafty.c('RecursionChest', {
       // and start it.  And to pause this instance
       runtime().functionCall(game, game, game.jsify(to_pass))  
     });
+
+    return true
   }
 });
 
+
+
 Crafty.c('ReturnChest', {
   init: function(){
-    this.requires("Chest")
+    this.requires("Chest, spr_ret_chest")
 
     this._Particles.maxParticles = 0
     this._Particles.startColour = [255, 0, 0, 1]
@@ -591,6 +671,8 @@ Crafty.c('ReturnChest', {
     });
 
     runtime().done(myId()) 
+
+    return true
   }
 });
 
