@@ -759,7 +759,7 @@ Crafty.c('Selectable', {
     this.requires('Particles');
 
     this.options = {
-        maxParticles: 10,
+        maxParticles: 1,
         size: 0,
         sizeRandom: 0,
         speed: 0,
@@ -767,9 +767,9 @@ Crafty.c('Selectable', {
         lifeSpan: 10,
         lifeSpanRandom: 7,
         angle: 0,
-        startColour: [255, 255, 0, 0.1],
+        startColour: [255, 255, 0, 0.5],
         startColourRandom: [48, 50, 45, 0],
-        endColour: [255, 100, 0, 0],
+        endColour: [255, 100, 0, 0.5],
         endColourRandom: [60, 60, 60, 0],
         sharpness: 20,
         sharpnessRandom: 10,
