@@ -5,6 +5,23 @@
   <script>
 
     $(document).ready(function(){
+
+
+      var paused = false
+      $("body").on("keypress", function(e){
+        if(e.which == 32)
+        {
+            if(!paused)
+            {
+                pause(game(game_number))
+            } else {
+                unpause(game(game_number))
+            }
+            paused = !paused
+            e.preventDefault()
+        }
+      });
+
       newGame("#ide_games",
         function(num){
           game(num).input = []      
@@ -549,7 +566,7 @@
     function list(){
       for(var v=1; v<=game_number; v++){
           game(v).createChest("HeadChest", 300, 20)
-          game(v).createChest("ConcatChest", 150, 10)
+          game(v).createChest("ConcatChest", 120, 100)
           game(v).createChest("ConsChest", 390, 35)
           game(v).createChest("RConsChest", 420, 200)
       }
