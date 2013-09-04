@@ -4,20 +4,25 @@
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script>
 
+    var paused = false
+    function togglePause()
+    {
+        if(!paused)
+        {
+            pause(game(game_number))
+        } else {
+            unpause(game(game_number))
+        }
+        paused = !paused
+    }
+
+
     $(document).ready(function(){
 
-
-      var paused = false
-      $("body").on("keypress", function(e){
+      $(window).on("keypress", function(e){
         if(e.which == 32)
         {
-            if(!paused)
-            {
-                pause(game(game_number))
-            } else {
-                unpause(game(game_number))
-            }
-            paused = !paused
+            togglePause()
             e.preventDefault()
         }
       });
@@ -166,6 +171,7 @@
       if(i == undefined)
         i = game_number
 
+      console.log("Accessing game " + i)
       return $("#game_"+i)[0].contentWindow.game()
     }
 
@@ -222,6 +228,7 @@
 
     function replay(input)
     {
+      game_number = $("#ide_games").children().length
       bottom_of_stack = game_number
 
       $("#ide_games").hide();
@@ -348,6 +355,40 @@
 
             if(list == [].toString())
               return []
+
+            return undefined;
+          }
+        }
+      }
+    }
+
+    function lastTest(){
+      first_game().createPlayer()
+      first_game().createChest("ReturnChest", 20, 280)
+
+      last_game().createPlayer()
+      last_game().createChest("ReturnChest", 20, 280)
+      last_game().createChest("RecursionChest", 410, 280)
+      last_game().createChest("HeadChest", 300, 20)
+
+      oracle = function(){
+        return {
+          sum: function(list){
+            var list = list.toString();
+            if(list == [1,2].toString())
+              return 2
+
+            if(list == [2,3].toString())
+              return 3
+
+            if(list == [1].toString())
+              return 1
+              
+            if(list == [2].toString())
+              return 2
+
+            if(list == [].toString())
+              return 0
 
             return undefined;
           }
@@ -549,34 +590,54 @@
       }
     }
 
+    function topGameNumber(){
+      return parseInt($("#ide_games").children().filter(":visible").first().attr("id").split("_")[1])
+    }
+
     function arith(){
-      for(var v=1; v<=game_number; v++){
-          game(v).createChest("AddChest", 200, 20)
-          game(v).createChest("ConstantChest", 30, 80)
-      }
+      
+          game(topGameNumber()).createChest("AddChest", 200, 20)
+          game(topGameNumber()).createChest("MaxChest", 100, 20)
+          game(topGameNumber()).createChest("ConstantChest", 30, 80)
     }
 
     function player(){
-      
-      for(var v=1; v<=game_number; v++){
-        game(v).createPlayer()
-      }
+        game(topGameNumber()).createPlayer()
     }
 
     function list(){
-      for(var v=1; v<=game_number; v++){
-          game(v).createChest("HeadChest", 300, 20)
-          game(v).createChest("ConcatChest", 120, 100)
-          game(v).createChest("ConsChest", 390, 35)
-          game(v).createChest("RConsChest", 420, 200)
-      }
+          game(topGameNumber()).createChest("HeadChest", 300, 20)
+          game(topGameNumber()).createChest("ConcatChest", 120, 100)
+          game(topGameNumber()).createChest("ConsChest", 390, 35)
+          game(topGameNumber()).createChest("RConsChest", 420, 200)
     }
 
+    //Yes, I know this function is stupid.  Quick hack.
+    function chest(name){
+        if(name == "HeadChest")
+          game(topGameNumber()).createChest("HeadChest", 300, 20)
+        if(name == "ConcatChest")
+          game(topGameNumber()).createChest("ConcatChest", 120, 100)
+        if(name == "ConsChest")
+          game(topGameNumber()).createChest("ConsChest", 390, 35)
+        if(name == "RConsChest")
+          game(topGameNumber()).createChest("RConsChest", 420, 200)
+        if(name == "RecursionChest")
+          game(topGameNumber()).createChest("RecursionChest", 410, 280)
+        if(name == "ReturnChest")
+          game(topGameNumber()).createChest("ReturnChest", 20, 280)
+        if(name == "AddChest")
+          game(topGameNumber()).createChest("AddChest", 200, 20)
+        if(name == "MaxChest")
+          game(topGameNumber()).createChest("MaxChest", 100, 20)
+        if(name == "ConstantChest")
+          game(topGameNumber()).createChest("ConstantChest", 30, 80)
+    }
+
+
     function fun(){
-      for(var v=1; v<=game_number; v++){
-          game(v).createChest("RecursionChest", 410, 280)
-          game(v).createChest("ReturnChest", 20, 280)
-      }
+          game(topGameNumber()).createChest("RecursionChest", 410, 280)
+          game(topGameNumber()).createChest("ReturnChest", 20, 280)
     }
   </script>
  </head>
@@ -586,37 +647,43 @@
    <div style="width:100%; height:400px" id="stack"></div>
 
    <div style="height:50px;">
-       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumTest()">
-          Sum      
-       </div>
-
-       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="maxTest()">
-          Max      
-       </div>
 
        <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="reverseTest()">
           Reverse      
        </div>
 
-       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumEveryOtherTest()">
+       <!--<div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumEveryOtherTest()">
           SumEO
+      </div>-->
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="mapPlusCTest()">
+          Map+C
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="sumTest()">
+          Sum      
        </div>
 
        <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="evenOddTest()">
           E/O
        </div>
 
-       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="mapPlusCTest()">
-          Map+C
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="lastTest()">
+          Last
        </div>
 
-       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="mapTimesCTest()">
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="maxTest()">
+          Max      
+       </div>
+       
+
+       <!--<div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="mapTimesCTest()">
           Map*C
-       </div>
+      </div>-->
 
-       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="add1st2()">
+       <!--<div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="add1st2()">
           Add1st2
-       </div>
+      </div>-->
    </div>
    <div style="margin-left: auto; margin-right: auto; width:90%; height: 80px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 20px">
        <span id="toggle_consoles" style="cursor:pointer; color: black; text-decoration: underline">Toggle Consoles</span>
@@ -650,6 +717,25 @@
        </div>
        <div style="cursor:pointer; margin-top: 10px; float: left; margin-left: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: teal; padding: 5px;" onclick="player()">
           Player
+       </div>
+
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="chest('HeadChest')">
+          Pop
+       </div>
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="chest('AddChest')">
+          Add
+       </div>
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="chest('ReturnChest')">
+          Ret
+       </div>
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="chest('ConsChest')">
+          Concat
+       </div>
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="chest('MaxChest')">
+          Max
+       </div>
+       <div style="cursor:pointer; margin-top: 10px; float: right; margin-right: 20px; width:50px; height: 20px; color: white; text-align: center; border: 4px solid black; background: gray; padding: 5px;" onclick="chest('ConstantChest')">
+          Const
        </div>
 
 

@@ -1,0 +1,70 @@
+***Basic training***
+
+Click pop, add, return, player
+"Here's your avatar.  Here's a list of numbers that your avatar is carrying."
+"What I'd like you to try to do is take the first two numbers off of the list, add them together, and then take the result to the white orb here."
+"You're allowed to ask any questions you want"
+
+
+
+
+Click pop, add, return, player
+"Now I'd like you to take three numbers off of the list, add all of them together, and take the result to the white orb"
+"Again, you can ask me any questions you want."
+
+
+
+
+Click pop, concat, return
+"Now I'd like you to take the first two numbers off of the list, then put the first one back on, then take the result to the white orb"
+
+
+
+
+Click pop, max, return
+"Now I'd like you to take the first two numbers off of the list, then take the larger of the two to the white orb"
+(Do a mini-lesson on abstract inputs.) 
+
+
+
+
+Click pop, constant, add, return
+"Now I'd like you to take the first number off of the list, add 6 to it, and return the result"
+
+
+
+
+***Advanced training***
+
+Click "Max" button
+Write "Find the biggest number" on a piece of paper.
+"Now this is going to be tricky.  The point of the next few exercises is to try to understand how the black orb works.  It's the most complicated one."
+"The goal is to find the biggest element in the list and bring it to the white orb."
+"But of course, this has to work for any list of numbers -- no matter what the numbers are or how they are arranged."
+"Any idea how to do it?"
+"I want you to take the first number off of the list."
+"Now I want you to take the rest of the list into the black orb."
+"Notice what happened?"
+"One way to think of the black orb is that it can solve the exact problem you're working on (find the biggest element) for any input that's smaller than the one you have in your inventory."
+"Now that the black orb gave you the solution to the smaller problem, what do you think you should do?"
+"Take the number you took off the list and figure out if it's bigger than the number the black orb gave you. Take the bigger one to the white orb."
+"Now the last thing you have to do is figure out what to do if there are no numbers in the list."
+"Touch the purple orb, enter the number 0, and take that to the white orb."
+
+"Now let's watch your solution run.  You'll notice that the black orb does something different during replay mode."
+
+(Replay.)
+
+"What did you notice?"
+"The black orb actually spawns a new copy of the level, but with 
+
+E/O
+
+
+
+***Benchmarks***
+
+Map+C
+Reverse
+Last
+
